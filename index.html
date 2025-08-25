@@ -463,10 +463,10 @@
         }
 
         .countdown {
-            margin-left: 10px; /* Tạo khoảng cách với tiêu đề */
+            margin-left: px; /* Tạo khoảng cách với tiêu đề */
             color: #ff0000; /* Màu đỏ nổi bật */
             font-weight: bold; /* Chữ đậm */
-            font-size: 16px;
+            font-size: 14px;
         }
 
     </style>
@@ -580,6 +580,56 @@
         <div id="linkGioiThieu" class="link-container collapsed"></div>
     </div>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="section">
+        <div class="section-title" onclick="toggleSection('linkShein')">
+            <span class="toggle-icon" id="icon-linkShein">+</span> <span id="group-shein"></span>
+            <span class="countdown" id="countdown-shein"></span>
+        </div>
+        <div id="linkShein" class="link-container collapsed"></div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <div class="bottom-section">
     <div class="section" id="regularColumn">
@@ -732,6 +782,11 @@
         gioiThieu: {
             enabled: true,
             expires: '2025-08-20T23:59:59+09:00' // đặt là expires: null nếu không muốn tự tắt
+        },
+       
+        shein: {
+            enabled: true,
+            expires: null // đặt là expires: null nếu không muốn tự tắt
         }
     };
 
@@ -767,12 +822,12 @@
     // ✅ Đổi thành true/false để hiện/ẩn lại hướng dẫn cài phím tắt
     const enable_ios_modal = true;
 
-    // ✅ Dữ liệu link cụ thể. protected: true khóa pass, highlight: true nhấp nháy chữ trong nút, hidden: true ẩn nút.
+    // ✅ Dữ liệu link cụ thể. protected: true khóa pass, highlight: true nhấp nháy chữ trong nút, hidden: true ẩn nút, copyOnly: true là chỉ coppy link.
     const linkCocLite = [
-        {url: "https://lite.tiktok.com/t/ZSSKCFG48/", label: "16PRM", hidden: true},
+        {url: "https://lite.tiktok.com/t/ZSSKCFG48/", label: "16PRM"},
         {url: "https://lite.tiktok.com/t/ZSA8naWsk/", label: "GL 5"},
-        {url: "https://lite.tiktok.com/t/ZSh33Yjob/", label: "GL 6", hidden: true},
-        {url: "https://lite.tiktok.com/t/ZShcngr3k/", label: "GL 7", hidden: true},
+        {url: "https://lite.tiktok.com/t/ZSh33Yjob/", label: "GL 6"},
+        {url: "https://lite.tiktok.com/t/ZShcngr3k/", label: "GL 7"},
         {url: "https://lite.tiktok.com/t/ZSHGhf62C6TV6-fmAjv/", label: "Sony 6"}
     ];
 
@@ -785,8 +840,8 @@
 
     const linkTuyet = [
         {url: "https://lite.tiktok.com/t/ZSSWfoNBD/", label: "Bấm ở đây GL6", highlight: true},
-        {url: "", label: "🔒 🔒", protected: true},
-        {url: "https://lite.tiktok.com/t/ZSSWP6hgf/", label: "🔒 GL7", protected: true},
+        {url: "", label: "🔒", protected: true},
+        {url: "https://lite.tiktok.com/t/ZSSWP6hgf/", label: "🔒 GL7"},
         {url: "", label: "🔒", protected: true, hidden: true},
         {url: "", label: "🔒", hidden: true}
     ];
@@ -798,9 +853,11 @@
     const linkSumo = [
         {url: "https://lite.tiktok.com/t/ZShKhA1Lb/", label: "GL 8", protected: true}
     ];
-
+    
     const linkKhoBau = [
-        {url: "375238789", label: "Yama Bena", copyOnly: true}
+        {url: "", label: "112"},
+        {url: "", label: "Test"},
+        {url: "https://jp.shein.com/user/auth/login?direction=nav", label: "Shein"}
     ];
 
     const linkCauCa = [
@@ -823,6 +880,14 @@
 
     const linkGioiThieu = [
         {url: "https://vt.tiktok.com/ZSh4FAKfk/", label: "MRT 005"}
+    ];
+
+    const linkShein = [
+        {url: "https://jp.shein.com/user/auth/login?direction=nav", label: "Tạo Tài Khoản"},
+        {url: "", label: "🔓🔓", protected: true},
+        {url: "", label: "🔓🔓", protected: true},
+        {url: "", label: "🔓🔓", protected: true},
+        {url: "", label: "🔓🔓", protected: true}
     ];
 
     const regularLinks = [
@@ -964,7 +1029,7 @@
     function updateSectionCountdowns() {
         const now = new Date();
         // Lấy chuỗi dịch tương ứng từ đối tượng translations
-        const langStrings = translations[currentLanguage]?.countdown || translations['vi'].countdown; // Mặc định là tiếng Việt nếu không tìm thấy
+        const langStrings = (translations[currentLanguage] && translations[currentLanguage].countdown) || translations['vi'].countdown; // Mặc định là tiếng Việt nếu không tìm thấy
 
         for (const section in sectionSettings) {
             const settings = sectionSettings[section];
@@ -1362,7 +1427,7 @@
 
     // ✅ Đổi icon + ↔ − khi thu gọn/mở rộng nhóm
     function toggleSection(id) {
-        const allSections = ['linkCoc', 'linkTuyet', 'linkTao', 'linkSumo', 'linkKhoBau', 'linkCauCa', 'link500Like', 'linkQRcode', 'linkGioiThieu'];
+        const allSections = ['linkCoc', 'linkTuyet', 'linkTao', 'linkSumo', 'linkKhoBau', 'linkCauCa', 'link500Like', 'linkQRcode', 'linkGioiThieu', 'linkShein'];
 
         allSections.forEach(sectionId => {
             const container = document.getElementById(sectionId);
@@ -1443,6 +1508,14 @@
     } else {
         document.querySelector('[onclick="toggleSection(\'linkGioiThieu\')"]').parentElement.style.display = 'none';
     }
+
+    if (isSectionVisible('shein')) {
+        renderLinks('linkShein', linkShein, 'shein', 'Shein', true);
+        document.querySelector('[onclick="toggleSection(\'linkShein\')"]').parentElement.style.display = '';
+    } else {
+        document.querySelector('[onclick="toggleSection(\'linkShein\')"]').parentElement.style.display = 'none';
+    }
+
     //___________________________________________________________
 
     // ✅ Các cột TikTok được hiển thị bên dưới
@@ -1693,6 +1766,7 @@
             "group-500like": "🧡 500 Like 🧡",
             "group-QR": "Quét Mã QR",
             "group-gt": "Giới Thiệu 📢",
+            "group-shein": "Shein",
             "info1": "Các Bạn giúp mình 1 lượt follow Video đang xem nhé!",
             "info2": "",
             "info3": "",
@@ -1733,7 +1807,7 @@
             "reset-success": "Cài đặt mặc định đã được thiết lập",
             "lang-changed": "Ngôn ngữ Tiếng Việt đã được thiết lập",
             "countdown": {
-               "remaining": "Kết thúc sau:",
+               "remaining": "Còn:",
                "days": "Ngày"
             }
         },
@@ -1751,7 +1825,8 @@
             "group-cauca": "🎣  Fishing  🎣",
             "group-500like": "🧡 500 Like 🧡",
             "group-QR": "Scan QR Code",
-            "group-gt": "Intro Links 📢",
+            "group-gt": "Intro 📢",
+            "group-shein": "Shein",
             "info1": "We’d appreciate your support with a follow!",
             "info2": "",
             "info3": "",
@@ -1810,7 +1885,8 @@
             "group-cauca": "🎣  釣り  🎣",
             "group-500like": "🧡 500 Like 🧡",
             "group-QR": "QRコードを読み取り",
-            "group-gt": "紹介リンク 📢",
+            "group-gt": "紹介 📢",
+            "group-shein": "Shein",
             "info1": "ぜひテックトックフォローをお願いします！",
             "info2": "",
             "info3": "",
@@ -1901,6 +1977,7 @@
         document.getElementById('group-500like').textContent = t["group-500like"];
         document.getElementById('group-QR').textContent = t["group-QR"];
         document.getElementById('group-gt').textContent = t["group-gt"];
+        document.getElementById('group-shein').textContent = t["group-shein"];
         document.getElementById('info1').textContent = t["info1"];
         document.getElementById('info2').textContent = t["info2"];
         document.getElementById('info3').textContent = t["info3"];
