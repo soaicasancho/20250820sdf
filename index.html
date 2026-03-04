@@ -141,7 +141,7 @@ function showResult(data) {
 function renderPending() {
   let html = "";
   if (pendingItems.length === 0) {
-    html = "<p style='text-align:center; color:#888;'>Trống.</p>";
+    html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
   } else {
     pendingItems.forEach((item, index) => {
       html += `<button class="pending-item" onclick="openAndMarkDone(${index})">${item.points} điểm (${item.expiry})</button>`;
@@ -154,7 +154,7 @@ function renderPending() {
 function renderDone() {
   let html = "";
   if (doneItems.length === 0) {
-    html = "<p style='text-align:center; color:#888;'>Trống.</p>";
+    html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
   } else {
     doneItems.forEach(item => {
       html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">${item.points} điểm - ${item.processTime}</button>`;
