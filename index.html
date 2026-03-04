@@ -51,7 +51,7 @@
   <button class="main-btn" onclick="runProcess()">Kiểm Tra Gmail</button>
   <div id="summary" class="success"></div>
   
-  <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">Mục Chưa Xử Lý (0 ¥)</button>
+  <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">Mục Chưa Xử Lý (0¥)</button>
   <div id="pendingSection"></div>
 
   <button class="done-header" onclick="toggleSection('done')">Mục Đã Xử Lý</button>
@@ -129,7 +129,7 @@ function showResult(data) {
     document.getElementById("summary").innerHTML = "Không có mail mới nào.";
     return;
   }
-  document.getElementById("summary").innerHTML = `Quét xong: có ${data.totalLinks} link mới (tổng ${data.totalPoints} ¥)`;
+  document.getElementById("summary").innerHTML = `Quét xong: có ${data.totalLinks} link mới (tổng ${data.totalPoints}¥)`;
   data.items.forEach(newItem => {
     let isDuplicate = pendingItems.some(i => i.link === newItem.link) || doneItems.some(i => i.link === newItem.link);
     if (!isDuplicate) pendingItems.push(newItem); 
@@ -145,7 +145,7 @@ function renderPending() {
   } else {
     pendingItems.forEach((item, index) => {
       html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
-        ${item.points} điểm (${item.expiry})
+        ${item.points}¥ (${item.expiry})
       </button>`;
     });
   }
@@ -162,7 +162,7 @@ function updatePendingHeader() {
   }, 0);
 
   document.getElementById("pendingHeaderBtn").innerText =
-    `Mục Chưa Xử Lý (${totalPoints} ¥)`;
+    `Mục Chưa Xử Lý (${totalPoints}¥)`;
 }
   
 // 5. RENDER DANH SÁCH ĐÃ XỬ LÝ
@@ -172,7 +172,7 @@ function renderDone() {
     html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
   } else {
     doneItems.forEach(item => {
-      html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">${item.points} điểm - ${item.processTime}</button>`;
+      html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">${item.points}¥ - ${item.processTime}</button>`;
     });
   }
   document.getElementById("doneSection").innerHTML = html;
