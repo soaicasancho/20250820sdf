@@ -1,6 +1,6 @@
 {
-  "name": "Video 60 Phút",
-  "short_name": "Video 60 Phút",
+  "name": "AutoScan",
+  "short_name": "AutoScan",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -17,4 +17,5 @@
       "type": "image/png"
     }
   ]
+
 }
