@@ -1,26 +1,227 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Giftee Tool</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TOOL QUÉT GIFTEE</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-    }
+    body { margin: 0; font-family: Arial; background: #f2f2f2; }
+    .container { width: 100%; max-width: 100%; padding: 12px; box-sizing: border-box; }
+    h1 { text-align: center; }
+    button { width: 95%; padding: 14px; margin: 8px auto; border-radius: 12px; border: none; font-size: 16px; cursor: pointer; display: block; }
+    .main-btn { background: #2196F3; color: white; font-weight: bold; }
+    .pending-header { background: #4CAF50; color: white; font-weight: bold; }
+    .pending-item { background: #90CAF9; color: #0D47A1; width: 90%; display: block; margin: 6px auto; }
+    .done-header { background: #FFC107; color: #333; font-weight: bold; }
+    .done-item { background: #e0e0e0; color: #555; width: 90%; display: block; margin: 6px auto; }
+    .hidden { display: none; }
+    .success { text-align: center; margin: 10px 0; color: green; font-weight: bold; }
+    .delete-done-btn { background: #f44336; color: white; font-weight: bold; }
 
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
+    /* ===== MODAL ===== */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; justify-content: center; align-items: center; z-index: 999; backdrop-filter: blur(2px); }
+    .modal.active { display: flex; }
+    .modal-box { background: white; width: 95%; max-width: 500px; padding: 20px; border-radius: 25px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .password-wrapper { position: relative; }
+    
+    /* 🔥 Đã thêm !important để chắc chắn không bị zoom */
+    .modal-box input { width: 100%; padding: 12px 40px 12px 12px; margin-top: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px !important; box-sizing: border-box; }
+    .eye-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .confirm-btn { background: #f44336; color: white; flex: 1; opacity: 0.5; }
+    .confirm-btn.enabled { opacity: 1; }
+    .cancel-btn { background: #9e9e9e; color: white; flex: 1; }
+    .error-text { color: red; margin-top: 8px; font-size: 14px; }
+    body.modal-open { overflow: hidden; }
   </style>
 </head>
 <body>
 
-<iframe src="https://script.google.com/macros/s/AKfycbwuK7lTa0R4Ytb8asUOwzZ0nbrk6qhZYp9vLv2reK0k9-45bICC3Bk6brg19Eyke9wT_A/exec"></iframe>
+<div class="container">
+  <h1>TOOL QUÉT GIFTEE</h1>
+  <button class="main-btn" onclick="runProcess()">Chạy Quét Mail</button>
+  <div id="summary" class="success"></div>
+  
+  <button class="pending-header" onclick="toggleSection('pending')">Mục Chưa Xử Lý</button>
+  <div id="pendingSection"></div>
+
+  <button class="done-header" onclick="toggleSection('done')">Mục Đã Xử Lý</button>
+  <div id="doneSection" class="hidden"></div>
+
+  <button class="delete-done-btn" onclick="openModal()">Xóa Dữ Liệu Đã Xử Lý</button>
+</div>
+
+<div id="passwordModal" class="modal hidden" onclick="outsideClick(event)">
+  <div class="modal-box">
+    <h3>Xác nhận xóa dữ liệu</h3>
+    <div style="position:relative;">
+      <input type="password" id="modalPassword" placeholder="Nhập mật khẩu" oninput="checkInput()" onkeydown="handleEnter(event)">
+      <span id="eyeIcon" onclick="togglePassword()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer;">👁</span>
+    </div>
+    <div id="modalError" class="error-text"></div>
+    <div class="modal-actions">
+      <button id="confirmBtn" class="confirm-btn" onclick="confirmDelete()" disabled>Xác nhận</button>
+      <button class="cancel-btn" onclick="closeModal()">Hủy</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 🔥 QUAN TRỌNG: DÁN LINK WEB APP CỦA GOOGLE SCRIPT VÀO ĐÂY
+const API_URL = "https://script.google.com/macros/s/AKfycbw2k1OaMz3vz3gBvn1i6wqq5rIvMM6IMUDJhJvUdnNH78gM0iLq6FdzsU_O71aFr4O-oA/exec";
+
+let pendingItems = [];
+let doneItems = [];
+
+// Hàm gọi API chuẩn form để tránh lỗi CORS
+async function callAPI(action, data = {}) {
+  data.action = action;
+  try {
+    let response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(data)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Lỗi API:", error);
+    return null;
+  }
+}
+
+// 1. TỰ ĐỘNG LOAD KHI MỞ TRANG
+window.onload = function() {
+  refreshDataFromServer();
+};
+
+function refreshDataFromServer() {
+  document.getElementById("pendingSection").innerHTML = "Đang tải dữ liệu...";
+  callAPI("loadAllItems").then(data => {
+    if(data) {
+      pendingItems = data.pending || [];
+      doneItems = data.done || [];
+      renderPending();
+      renderDone();
+    } else {
+      document.getElementById("pendingSection").innerHTML = "Lỗi kết nối máy chủ!";
+    }
+  });
+}
+
+// 2. CHẠY QUÉT MAIL
+function runProcess() {
+  document.getElementById("summary").innerHTML = "Đang quét mail mới...";
+  callAPI("processTikTokGiftEmails").then(showResult);
+}
+
+// 3. NHẬN KẾT QUẢ QUÉT
+function showResult(data) {
+  if (!data || data.totalLinks === 0) {
+    document.getElementById("summary").innerHTML = "Không có mail mới nào.";
+    return;
+  }
+  document.getElementById("summary").innerHTML = `Quét xong: có ${data.totalLinks} link mới (tổng ${data.totalPoints} point)`;
+  data.items.forEach(newItem => {
+    let isDuplicate = pendingItems.some(i => i.link === newItem.link) || doneItems.some(i => i.link === newItem.link);
+    if (!isDuplicate) pendingItems.push(newItem); 
+  });
+  renderPending();
+}
+
+// 4. RENDER DANH SÁCH CHƯA XỬ LÝ
+function renderPending() {
+  let html = "";
+  if (pendingItems.length === 0) {
+    html = "<p style='text-align:center; color:#888;'>Không có mục nào.</p>";
+  } else {
+    pendingItems.forEach((item, index) => {
+      html += `<button class="pending-item" onclick="openAndMarkDone(${index})">${item.points} điểm (${item.expiry})</button>`;
+    });
+  }
+  document.getElementById("pendingSection").innerHTML = html;
+}
+
+// 5. RENDER DANH SÁCH ĐÃ XỬ LÝ
+function renderDone() {
+  let html = "";
+  if (doneItems.length === 0) {
+    html = "<p style='text-align:center; color:#888;'>Trống.</p>";
+  } else {
+    doneItems.forEach(item => {
+      html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">${item.points} điểm - ${item.processTime}</button>`;
+    });
+  }
+  document.getElementById("doneSection").innerHTML = html;
+}
+
+// 6. XỬ LÝ KHI BẤM VÀO LINK
+function openAndMarkDone(index) {
+  let item = pendingItems[index];
+  window.open(item.link, "_blank");
+
+  let now = new Date();
+  let timeString = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0') + " " + now.getDate().toString().padStart(2,'0') + "/" + (now.getMonth()+1).toString().padStart(2,'0');
+
+  // Gửi lệnh cập nhật ngầm qua API
+  callAPI("markAsDone", { id: item.id, processTime: timeString });
+
+  item.processTime = timeString;
+  doneItems.unshift(item);
+  pendingItems.splice(index, 1);
+  renderPending();
+  renderDone();
+}
+
+// CÁC HÀM UI CÒN LẠI
+function toggleSection(section) {
+  if (section === 'pending') { document.getElementById("pendingSection").classList.toggle("hidden"); } 
+  else { document.getElementById("doneSection").classList.toggle("hidden"); }
+}
+
+function openModal() {
+  document.getElementById("passwordModal").classList.add("active");
+  document.body.classList.add("modal-open");
+  document.getElementById("modalPassword").value = "";
+  document.getElementById("modalError").innerText = "";
+  document.getElementById("confirmBtn").disabled = true;
+  // 🔥 Lệnh tự động focus đã được gỡ bỏ
+}
+
+function closeModal() {
+  document.getElementById("passwordModal").classList.remove("active");
+  document.body.classList.remove("modal-open");
+}
+
+function outsideClick(event) { if (event.target.id === "passwordModal") closeModal(); }
+function handleEnter(event) { if (event.key === "Enter" && !document.getElementById("confirmBtn").disabled) confirmDelete(); }
+
+function togglePassword() {
+  const input = document.getElementById("modalPassword");
+  const eye = document.getElementById("eyeIcon");
+  if (input.type === "password") { input.type = "text"; eye.textContent = "🙈"; } 
+  else { input.type = "password"; eye.textContent = "👁"; }
+}
+
+function confirmDelete() {
+  let password = document.getElementById("modalPassword").value;
+  if (password === "8322") {
+    callAPI("clearDoneItems").then(() => {
+      doneItems = [];
+      renderDone();
+      closeModal();
+    });
+  } else {
+    document.getElementById("modalError").innerText = "Sai mật khẩu!";
+  }
+}
+
+function checkInput() {
+  let val = document.getElementById("modalPassword").value.trim();
+  let btn = document.getElementById("confirmBtn");
+  btn.disabled = (val === "");
+  if (val !== "") btn.classList.add("enabled"); else btn.classList.remove("enabled");
+}
+</script>
 
 </body>
 </html>
