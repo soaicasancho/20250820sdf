@@ -231,6 +231,16 @@ function checkInput() {
   if (val !== "") btn.classList.add("enabled"); else btn.classList.remove("enabled");
 }
 </script>
+</script>
 
+<!-- ✅ Đăng ký Service Worker -->
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+    .then(() => console.log("Service Worker Registered"))
+    .catch(err => console.log("SW Error:", err));
+}
+</script>
+  
 </body>
 </html>
