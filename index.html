@@ -51,7 +51,7 @@
   <button class="main-btn" onclick="runProcess()">Kiểm Tra Gmail</button>
   <div id="summary" class="success"></div>
   
-  <button class="pending-header" onclick="toggleSection('pending')">Mục Chưa Xử Lý</button>
+  <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">Mục Chưa Xử Lý (0 Point)</button>
   <div id="pendingSection"></div>
 
   <button class="done-header" onclick="toggleSection('done')">Mục Đã Xử Lý</button>
@@ -144,12 +144,27 @@ function renderPending() {
     html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
   } else {
     pendingItems.forEach((item, index) => {
-      html += `<button class="pending-item" onclick="openAndMarkDone(${index})">${item.points} điểm (${item.expiry})</button>`;
+      html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
+        ${item.points} điểm (${item.expiry})
+      </button>`;
     });
   }
+
   document.getElementById("pendingSection").innerHTML = html;
+
+  // 🔥 Cập nhật tổng point
+  updatePendingHeader();
 }
 
+function updatePendingHeader() {
+  let totalPoints = pendingItems.reduce((sum, item) => {
+    return sum + (parseInt(item.points) || 0);
+  }, 0);
+
+  document.getElementById("pendingHeaderBtn").innerText =
+    `Mục Chưa Xử Lý (${totalPoints} Point)`;
+}
+  
 // 5. RENDER DANH SÁCH ĐÃ XỬ LÝ
 function renderDone() {
   let html = "";
