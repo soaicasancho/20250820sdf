@@ -48,7 +48,7 @@
 
 <div class="container">
   <h1>Auto Scan System</h1>
-  <button class="main-btn" onclick="runProcess()">Chạy Quét Mail</button>
+  <button class="main-btn" onclick="runProcess()">Kiểm Tra Gmail</button>
   <div id="summary" class="success"></div>
   
   <button class="pending-header" onclick="toggleSection('pending')">Mục Chưa Xử Lý</button>
@@ -104,7 +104,7 @@ window.onload = function() {
 };
 
 function refreshDataFromServer() {
-  document.getElementById("pendingSection").innerHTML = "Đang tải dữ liệu...";
+  document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'> Đang tải dữ liệu...";
   callAPI("loadAllItems").then(data => {
     if(data) {
       pendingItems = data.pending || [];
@@ -112,7 +112,7 @@ function refreshDataFromServer() {
       renderPending();
       renderDone();
     } else {
-      document.getElementById("pendingSection").innerHTML = "Lỗi kết nối máy chủ!";
+      document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'> Lỗi kết nối máy chủ!";
     }
   });
 }
@@ -141,7 +141,7 @@ function showResult(data) {
 function renderPending() {
   let html = "";
   if (pendingItems.length === 0) {
-    html = "<p style='text-align:center; color:#888;'>Không có mục nào.</p>";
+    html = "<p style='text-align:center; color:#888;'>Trống.</p>";
   } else {
     pendingItems.forEach((item, index) => {
       html += `<button class="pending-item" onclick="openAndMarkDone(${index})">${item.points} điểm (${item.expiry})</button>`;
