@@ -467,11 +467,41 @@
 </script>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(() => console.log("Service Worker Registered"))
-            .catch(err => console.log("SW Error:", err));
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+     .then(() => console.log("Service Worker Registered"))
+      .catch(err => console.log("SW Error:", err));
+}
+
+/* ===== kéo xuống để cập nhật lại trang (Silent Version) ===== */
+
+let startY = 0;
+let isPulling = false;
+const threshold = 60; // khoảng kéo tối thiểu
+
+if ("ontouchstart" in window) {
+
+    document.addEventListener("touchstart", function(e) {
+        if (window.scrollY === 0) { // chỉ khi đang ở đầu trang
+            startY = e.touches[0].clientY;
+            isPulling = true;
+        }
+    });
+
+    document.addEventListener("touchend", function(e) {
+        if (!isPulling) return;
+
+        let endY = e.changedTouches[0].clientY;
+        let distance = endY - startY;
+
+        if (distance > threshold) {
+            refreshDataFromServer(); // cập nhật âm thầm
+        }
+
+        isPulling = false;
+        startY = 0;
+    });
+}
 </script>
     
 </body>
