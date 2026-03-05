@@ -445,12 +445,24 @@
     // Xác nhận mật khẩu và xóa dữ liệu
     function confirmDelete() {
         let password = document.getElementById("modalPassword").value;
+
         if (password === "8322") {
-            callAPI("clearDoneItems").then(() => {
-                doneItems = [];
-                renderDone();
-                closeModal();
+
+            callAPI("clearDoneItems").then(res => {
+
+                if (res && res.success) {
+
+                    // xóa toàn bộ item resolved trên giao diện
+                    refreshDataFromServer();
+
+                    closeModal();
+
+                } else {
+                    document.getElementById("modalError").innerText = "Lỗi server!";
+                }
+
             });
+
         } else {
             document.getElementById("modalError").innerText = "Sai mật khẩu!";
         }
