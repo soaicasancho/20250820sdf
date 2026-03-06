@@ -200,6 +200,23 @@
         body.modal-open {
             overflow: hidden;
         }
+
+        .spinner {
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          border: 3px solid #ddd;
+          border-top: 3px solid #333;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin-right: 6px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
@@ -241,7 +258,7 @@
 
 <script>
     /* 🔥 Cấu hình API Google Script */
-    const API_URL = "https://script.google.com/macros/s/AKfycbxdCrl-Te5_K6YbbGs-ccrlKUQlVFKYVLRTIJlhRhBp1TlabDp5Bf_nypInrYEmJY9_/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzMNtq13Om2Lt0hrnD9Kyx5Lf_p1vDhH-TLh71mf67tfkkwN-K3JDP8gM784yPD_XMN/exec";
 
     /* Biến lưu trữ dữ liệu tạm thời */
     let pendingItems = [];
@@ -270,21 +287,34 @@
         // Mặc định: pending mở, done đóng
         document.getElementById("pendingSection").classList.remove("hidden");
         document.getElementById("doneSection").classList.add("hidden");
-
+        showLoading("Đang tải dữ liệu...");
         refreshDataFromServer();
     };
 
-    /**
-     * Lấy toàn bộ dữ liệu từ Server
-     */
+    /* Tạo hàm hiển thị Loading */
+    function showLoading(text){
+
+      document.getElementById("summary").innerHTML =
+      '<span class="spinner"></span>' + text;
+
+    }
+
+    function hideLoading(){
+
+      document.getElementById("summary").innerHTML="";
+
+    }
+
+    /* Lấy toàn bộ dữ liệu từ Server */
     function refreshDataFromServer() {
-        document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'> ⏳Đang tải dữ liệu...";
+        showLoading("Đang tải dữ liệu...");
         callAPI("loadAllItems").then(data => {
             if(data) {
                 pendingItems = data.pending || [];
                 doneItems = data.done || [];
                 renderPending();
                 renderDone();
+               hideLoading();
             } else {
                 document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'> Lỗi kết nối máy chủ!";
             }
@@ -293,8 +323,17 @@
 
     /* 2. KÍCH HOẠT QUÉT MAIL MỚI */
     function runProcess() {
-        document.getElementById("summary").innerHTML = "⏳Đang kiểm tra mail mới...";
-        callAPI("processTikTokGiftEmails").then(showResult);
+
+        showLoading("Đang kiểm tra mail mới...");
+
+        callAPI("processTikTokGiftEmails").then(res => {
+
+            showResult(res);
+
+            hideLoading();
+
+        });
+
     }
 
     /* 3. HIỂN THỊ KẾT QUẢ SAU KHI QUÉT */
@@ -444,27 +483,37 @@
 
     // Xác nhận mật khẩu và xóa dữ liệu
     function confirmDelete() {
+
         let password = document.getElementById("modalPassword").value;
 
         if (password === "8322") {
 
+            closeModal();
+
+            showLoading("Đang xóa dữ liệu...");
+
             callAPI("clearDoneItems").then(res => {
 
-                if (res && res.success) {
+                if(res && res.success){
 
-                    // xóa toàn bộ item resolved trên giao diện
+                    document.getElementById("summary").innerHTML="✅ Đã xóa dữ liệu thành công";
+
                     refreshDataFromServer();
 
-                    closeModal();
+                    setTimeout(hideLoading,2000);
 
-                } else {
-                    document.getElementById("modalError").innerText = "Lỗi server!";
+                }else{
+
+                    document.getElementById("summary").innerHTML="❌ Lỗi xóa dữ liệu";
+
                 }
 
             });
 
         } else {
+
             document.getElementById("modalError").innerText = "Sai mật khẩu!";
+
         }
     }
 
