@@ -223,9 +223,10 @@
 
 <div class="container">
     <h1>Auto Scan System</h1>
-    <div id="summary" class="success"></div>
-    <button class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
-    
+
+    <div id="checkStatus" class="success"></div>
+    <button id="checkBtn" class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
+
     <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
         Mục Chưa Xử Lý
     </button>
@@ -236,10 +237,11 @@
     </button>
     <div id="doneSection" class="hidden"></div>
 
-    <button class="delete-done-btn" onclick="openModal()">
+    <div id="deleteStatus" class="success"></div>
+    <button id="deleteBtn" class="delete-done-btn" onclick="openModal()">
         Xóa Dữ Liệu Đã Xử Lý
     </button>
-</div>
+    </div>
 
 <div id="passwordModal" class="modal hidden" onclick="outsideClick(event)">
     <div class="modal-box">
@@ -287,34 +289,30 @@
         // Mặc định: pending mở, done đóng
         document.getElementById("pendingSection").classList.remove("hidden");
         document.getElementById("doneSection").classList.add("hidden");
-        showLoading("Đang tải dữ liệu...");
+        document.getElementById("pendingHeaderBtn").innerHTML ='<span class="spinner"></span>Đang tải dữ liệu...';
         refreshDataFromServer();
     };
 
     /* Tạo hàm hiển thị Loading */
-    function showLoading(text){
-
-      document.getElementById("summary").innerHTML =
+    function showLoading(target, text){
+      document.getElementById(target).innerHTML =
       '<span class="spinner"></span>' + text;
-
     }
 
-    function hideLoading(){
-
-      document.getElementById("summary").innerHTML="";
-
+    function hideLoading(target){
+      document.getElementById(target).innerHTML="";
     }
 
     /* Lấy toàn bộ dữ liệu từ Server */
     function refreshDataFromServer() {
-        showLoading("Đang tải dữ liệu...");
+        document.getElementById("pendingHeaderBtn").innerHTML ='<span class="spinner"></span>Đang tải dữ liệu...';
         callAPI("loadAllItems").then(data => {
             if(data) {
                 pendingItems = data.pending || [];
                 doneItems = data.done || [];
                 renderPending();
                 renderDone();
-               hideLoading();
+               updatePendingHeader();
             } else {
                 document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'> Lỗi kết nối máy chủ!";
             }
@@ -322,15 +320,47 @@
     }
 
     /* 2. KÍCH HOẠT QUÉT MAIL MỚI */
+    let isProcessing = false;
+
     function runProcess() {
 
-        showLoading("Đang kiểm tra email mới...");
+        if(isProcessing) return;
+
+        isProcessing = true;
+
+        const btn = document.getElementById("checkBtn");
+        const status = document.getElementById("checkStatus");
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Đang kiểm tra email...';
 
         callAPI("processTikTokGiftEmails").then(res => {
 
-            showResult(res);
+            let text = "Không có email mới nào.";
 
-            hideLoading();
+            if(res && res.totalLinks > 0){
+                text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
+            }
+
+            status.innerHTML = text;
+
+            if(res && res.items){
+                res.items.forEach(newItem => {
+                    let isDuplicate = pendingItems.some(i => i.link === newItem.link) ||
+                                      doneItems.some(i => i.link === newItem.link);
+
+                    if (!isDuplicate) pendingItems.push(newItem);
+                });
+
+                renderPending();
+            }
+
+            setTimeout(()=>{
+                status.innerHTML="";
+                btn.disabled=false;
+                btn.innerHTML="Kiểm Tra Email";
+                isProcessing=false;
+            },10000);
 
         });
 
@@ -498,17 +528,24 @@
 
             closeModal();
 
-            showLoading("Đang xóa dữ liệu...");
+            const deleteBtn = document.getElementById("deleteBtn");
+            const status = document.getElementById("deleteStatus");
+
+            deleteBtn.disabled = true;
+
+            showLoading("deleteStatus","Đang xóa dữ liệu...");
 
             callAPI("clearDoneItems").then(res => {
 
                 if(res && res.success){
 
-                    document.getElementById("summary").innerHTML="✅ Đã xóa dữ liệu thành công";
+                    status.innerHTML="✅ Đã xóa dữ liệu thành công";
 
                     setTimeout(() => {
+                        status.innerHTML="";
+                        deleteBtn.disabled=false;
                         refreshDataFromServer();
-                    }, 1500);
+                    }, 2000);
 
                 }else{
 
