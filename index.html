@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AutoScanMail</title>
+    <title>AutoScanEmail</title>
     
     <link rel="icon" type="image/png" href="Logo.png"/>
     <link rel="manifest" href="manifest.json">
@@ -93,7 +93,7 @@
         /* Thông báo trạng thái thành công */
         .success {
             text-align: center;
-            margin: 10px 0;
+            margin: 10px 0 15px 0;
             color: green;
             font-weight: bold;
         }
@@ -223,8 +223,8 @@
 
 <div class="container">
     <h1>Auto Scan System</h1>
-    <button class="main-btn" onclick="runProcess()">Kiểm Tra Gmail</button>
     <div id="summary" class="success"></div>
+    <button class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
     
     <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
         Mục Chưa Xử Lý
@@ -324,7 +324,7 @@
     /* 2. KÍCH HOẠT QUÉT MAIL MỚI */
     function runProcess() {
 
-        showLoading("Đang kiểm tra mail mới...");
+        showLoading("Đang kiểm tra email mới...");
 
         callAPI("processTikTokGiftEmails").then(res => {
 
@@ -339,7 +339,7 @@
     /* 3. HIỂN THỊ KẾT QUẢ SAU KHI QUÉT */
     function showResult(data) {
         if (!data || data.totalLinks === 0) {
-            document.getElementById("summary").innerHTML = "Không có mail mới nào.";
+            document.getElementById("summary").innerHTML = "Không có email mới nào.";
             return;
         }
         document.getElementById("summary").innerHTML = `Quét xong: có ${data.totalLinks} link mới (tổng ${data.totalPoints}¥)`;
