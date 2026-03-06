@@ -506,9 +506,9 @@
 
                     document.getElementById("summary").innerHTML="✅ Đã xóa dữ liệu thành công";
 
-                    refreshDataFromServer();
-
-                    setTimeout(hideLoading,2000);
+                    setTimeout(() => {
+                        refreshDataFromServer();
+                    }, 1500);
 
                 }else{
 
