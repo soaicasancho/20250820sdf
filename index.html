@@ -227,7 +227,7 @@
     <div id="summary" class="success"></div>
     
     <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
-        Mục Chưa Xử Lý (0¥)
+        Mục Chưa Xử Lý
     </button>
     <div id="pendingSection"></div>
 
@@ -258,7 +258,7 @@
 
 <script>
     /* 🔥 Cấu hình API Google Script */
-    const API_URL = "https://script.google.com/macros/s/AKfycbwyX8CTHbKVzppgn-jozTuasJi1PhPuxhE09q0LoHihpwvd3oRQmg6nTlINGajsXAxC/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwkYK2UAt00Ihk0JFVlRj0nFIPmbZU1TsYGHnUlxgtNEDTUK7dL7E6cxTzNmB_M072l/exec";
 
     /* Biến lưu trữ dữ liệu tạm thời */
     let pendingItems = [];
@@ -367,13 +367,21 @@
     }
 
     /**
-     * Cập nhật số tiền tổng cộng trên tiêu đề
-     */
+     * Cập nhật số tiền tổng cộng trên tiêu đề */
     function updatePendingHeader() {
+
+        let header = document.getElementById("pendingHeaderBtn");
+
+        if (pendingItems.length === 0) {
+            header.innerText = "Mục Chưa Xử Lý";
+            return;
+        }
+
         let totalPoints = pendingItems.reduce((sum, item) => {
             return sum + (parseInt(item.points) || 0);
         }, 0);
-        document.getElementById("pendingHeaderBtn").innerText = `Mục Chưa Xử Lý (${totalPoints}¥)`;
+
+        header.innerText = `Mục Chưa Xử Lý (${totalPoints}¥)`;
     }
     
     /* 5. HIỂN THỊ DANH SÁCH ĐÃ XỬ LÝ (HTML) */
