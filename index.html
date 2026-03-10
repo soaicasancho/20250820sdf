@@ -315,12 +315,12 @@
     <button id="checkBtn" class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
 
     <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
-        Mục Chưa Xử Lý
+        Chưa Xử Lý
     </button>
     <div id="pendingSection"></div>
 
     <button id="doneHeaderBtn" class="done-header" onclick="toggleSection('done')">
-        Mục Đã Xử Lý
+        Đã Xử Lý
     </button>
     <div id="doneSection" class="hidden"></div>
 
@@ -488,7 +488,7 @@
         let header = document.getElementById("pendingHeaderBtn");
 
         if (pendingItems.length === 0) {
-            header.innerText = "Mục Chưa Xử Lý";
+            header.innerText = "Chưa Xử Lý";
             return;
         }
 
@@ -498,7 +498,7 @@
 
         let totalLinks = pendingItems.length;
 
-        header.innerText = `Mục Chưa Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
+        header.innerText = `Chưa Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
     }
 
     function updateDoneHeader() {
@@ -506,7 +506,7 @@
         let header = document.getElementById("doneHeaderBtn");
 
         if (doneItems.length === 0) {
-            header.innerText = "Mục Đã Xử Lý";
+            header.innerText = "Đã Xử Lý";
             return;
         }
 
@@ -516,7 +516,7 @@
 
         let totalLinks = doneItems.length;
 
-        header.innerText = `Mục Đã Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
+        header.innerText = `Đã Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
     }
     
     /* 5. HIỂN THỊ DANH SÁCH ĐÃ XỬ LÝ (HTML) */
