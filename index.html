@@ -305,6 +305,31 @@
             display:block;
         }
 
+        /* ===== Splash Screen ===== */
+
+        #splashScreen{
+            position:fixed;
+            inset:0;
+            background:white;
+            z-index:5000;
+
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+        }
+
+        .splash-logo{
+            width:120px;
+            height:auto;
+        }
+
+        .splash-text{
+            margin-top:20px;
+            font-size:16px;
+            color:#555;
+        }
+
     </style>
 </head>
 <body>
@@ -377,11 +402,13 @@
 
     /* 1. TỰ ĐỘNG TẢI DỮ LIỆU KHI TRANG WEB MỞ */
     window.onload = function() {
-        // Mặc định: pending mở, done đóng
-        document.getElementById("pendingSection").classList.remove("hidden");
-        document.getElementById("doneSection").classList.add("hidden");
-        document.getElementById("pendingHeaderBtn").innerHTML ='<span class="spinner"></span>Đang tải dữ liệu...';
-        refreshDataFromServer();
+
+        // ẩn app
+        document.querySelector(".container").style.display = "none";
+
+        // chạy kiểm tra internet
+        checkInternet();
+
     };
 
     /* Tạo hàm hiển thị Loading */
@@ -396,18 +423,32 @@
 
     /* Lấy toàn bộ dữ liệu từ Server */
     function refreshDataFromServer() {
-        document.getElementById("pendingHeaderBtn").innerHTML ='<span class="spinner"></span>Đang tải dữ liệu...';
+
         callAPI("loadAllItems").then(data => {
+
             if(data) {
+
                 pendingItems = data.pending || [];
                 doneItems = data.done || [];
+
                 renderPending();
                 renderDone();
-               updatePendingHeader();
+                updatePendingHeader();
+
             } else {
-                document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'> Lỗi kết nối máy chủ!";
+
+                document.getElementById("pendingSection").innerHTML =
+                "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!";
+
             }
+
+            /* ✅ Ẩn Splash khi dữ liệu load xong */
+
+            document.getElementById("splashScreen").style.display = "none";
+            document.querySelector(".container").style.display = "block";
+
         });
+
     }
 
     /* 2. KÍCH HOẠT QUÉT MAIL MỚI */
@@ -827,6 +868,25 @@
     document.querySelector(".container").classList.remove("hidden");
     }
 
+    /* ===== KIỂM TRA INTERNET ===== */
+
+    function checkInternet(){
+
+        if(!navigator.onLine){
+
+            document.getElementById("noInternetModal").classList.add("active");
+
+            return;
+
+        }
+
+        // có internet
+        document.getElementById("splashText").classList.remove("hidden");
+
+        refreshDataFromServer();
+
+    }
+
 </script>
 
 <script>
@@ -890,6 +950,35 @@ if ("ontouchstart" in window) {
 Quay Lại
 </button>
 </div>
+</div>
+
+<!-- Modal mất kết nối internet -->
+<div id="noInternetModal" class="modal">
+<div class="modal-box">
+
+<h3>⚠ Không có kết nối Internet</h3>
+
+<p style="color:#555;margin-top:10px;">
+Ứng dụng cần internet để hoạt động.<br>
+Vui lòng kiểm tra Wifi hoặc 4G.
+</p>
+
+<div class="modal-actions">
+<button onclick="checkInternet()">Kiểm Tra Lại</button>
+</div>
+
+</div>
+</div>
+
+<!-- Splash Screen -->
+<div id="splashScreen">
+
+<img src="Logo.png" class="splash-logo">
+
+<div id="splashText" class="splash-text hidden">
+<span class="spinner"></span>Đang kết nối máy chủ...
+</div>
+
 </div>
 
 </body>
