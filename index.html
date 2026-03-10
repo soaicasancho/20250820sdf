@@ -217,6 +217,12 @@
           100% { transform: rotate(360deg); }
         }
 
+        button:disabled {
+            background: #bdbdbd !important;
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 <body>
@@ -224,7 +230,6 @@
 <div class="container">
     <h1>Auto Scan System</h1>
 
-    <div id="checkStatus" class="success"></div>
     <button id="checkBtn" class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
 
     <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
@@ -232,12 +237,11 @@
     </button>
     <div id="pendingSection"></div>
 
-    <button class="done-header" onclick="toggleSection('done')">
+    <button id="doneHeaderBtn" class="done-header" onclick="toggleSection('done')">
         Mục Đã Xử Lý
     </button>
     <div id="doneSection" class="hidden"></div>
 
-    <div id="deleteStatus" class="success"></div>
     <button id="deleteBtn" class="delete-done-btn" onclick="openModal()">
         Xóa Dữ Liệu Đã Xử Lý
     </button>
@@ -329,7 +333,6 @@
         isProcessing = true;
 
         const btn = document.getElementById("checkBtn");
-        const status = document.getElementById("checkStatus");
 
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span>Đang kiểm tra email...';
@@ -342,42 +345,32 @@
                 text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
             }
 
-            status.innerHTML = text;
+            btn.innerHTML = text;
 
             if(res && res.items){
                 res.items.forEach(newItem => {
-                    let isDuplicate = pendingItems.some(i => i.link === newItem.link) ||
-                                      doneItems.some(i => i.link === newItem.link);
+
+                    let isDuplicate =
+                        pendingItems.some(i => i.link === newItem.link) ||
+                        doneItems.some(i => i.link === newItem.link);
 
                     if (!isDuplicate) pendingItems.push(newItem);
+
                 });
 
                 renderPending();
             }
 
             setTimeout(()=>{
-                status.innerHTML="";
-                btn.disabled=false;
-                btn.innerHTML="Kiểm Tra Email";
-                isProcessing=false;
+
+                btn.innerHTML = "Kiểm Tra Email";
+                btn.disabled = false;
+                isProcessing = false;
+
             },10000);
 
         });
 
-    }
-
-    /* 3. HIỂN THỊ KẾT QUẢ SAU KHI QUÉT */
-    function showResult(data) {
-        if (!data || data.totalLinks === 0) {
-            document.getElementById("summary").innerHTML = "Không có email mới nào.";
-            return;
-        }
-        document.getElementById("summary").innerHTML = `Quét xong: có ${data.totalLinks} link mới (tổng ${data.totalPoints}¥)`;
-        data.items.forEach(newItem => {
-            let isDuplicate = pendingItems.some(i => i.link === newItem.link) || doneItems.some(i => i.link === newItem.link);
-            if (!isDuplicate) pendingItems.push(newItem); 
-        });
-        renderPending();
     }
 
     /* 4. HIỂN THỊ DANH SÁCH CHƯA XỬ LÝ (HTML) */
@@ -396,8 +389,7 @@
         updatePendingHeader();
     }
 
-    /**
-     * Cập nhật số tiền tổng cộng trên tiêu đề */
+    /* Cập nhật số tiền tổng cộng trên tiêu đề */
     function updatePendingHeader() {
 
         let header = document.getElementById("pendingHeaderBtn");
@@ -411,20 +403,53 @@
             return sum + (parseInt(item.points) || 0);
         }, 0);
 
-        header.innerText = `Mục Chưa Xử Lý (${totalPoints}¥)`;
+        let totalLinks = pendingItems.length;
+
+        header.innerText = `Mục Chưa Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
+    }
+
+    function updateDoneHeader() {
+
+        let header = document.getElementById("doneHeaderBtn");
+
+        if (doneItems.length === 0) {
+            header.innerText = "Mục Đã Xử Lý";
+            return;
+        }
+
+        let totalPoints = doneItems.reduce((sum, item) => {
+            return sum + (parseInt(item.points) || 0);
+        }, 0);
+
+        let totalLinks = doneItems.length;
+
+        header.innerText = `Mục Đã Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
     }
     
     /* 5. HIỂN THỊ DANH SÁCH ĐÃ XỬ LÝ (HTML) */
     function renderDone() {
+
         let html = "";
+
         if (doneItems.length === 0) {
+
             html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
+
         } else {
+
             doneItems.forEach(item => {
-                html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">${item.points}¥ - ${item.processTime}</button>`;
+
+                    html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">
+                    ${item.points}¥ - ${item.processTime}
+                </button>`;
+
             });
+
         }
+
         document.getElementById("doneSection").innerHTML = html;
+
+        updateDoneHeader();
     }
 
     /* 6. XỬ LÝ KHI BẤM VÀO MỘT LINK */
@@ -529,27 +554,33 @@
             closeModal();
 
             const deleteBtn = document.getElementById("deleteBtn");
-            const status = document.getElementById("deleteStatus");
 
             deleteBtn.disabled = true;
-
-            showLoading("deleteStatus","Đang xóa dữ liệu...");
+            deleteBtn.innerHTML = '<span class="spinner"></span>Đang xóa dữ liệu...';
 
             callAPI("clearDoneItems").then(res => {
 
                 if(res && res.success){
 
-                    status.innerHTML="✅ Đã xóa dữ liệu thành công";
+                    deleteBtn.innerHTML = "✅ Đã xóa dữ liệu thành công";
 
                     setTimeout(() => {
-                        status.innerHTML="";
-                        deleteBtn.disabled=false;
+
+                        deleteBtn.innerHTML = "Xóa Dữ Liệu Đã Xử Lý";
+                        deleteBtn.disabled = false;
+
                         refreshDataFromServer();
+
                     }, 2000);
 
-                }else{
+                } else {
 
-                    document.getElementById("summary").innerHTML="❌ Lỗi xóa dữ liệu";
+                    deleteBtn.innerHTML = "❌ Lỗi xóa dữ liệu";
+
+                    setTimeout(() => {
+                        deleteBtn.innerHTML = "Xóa Dữ Liệu Đã Xử Lý";
+                        deleteBtn.disabled = false;
+                    },2000);
 
                 }
 
