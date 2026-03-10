@@ -121,7 +121,7 @@
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 999;
+            z-index: 6000;
             backdrop-filter: blur(2px);
         }
 
@@ -871,22 +871,22 @@
     }
 
     /* ===== KIỂM TRA INTERNET ===== */
-
     function checkInternet(){
-
         if(!navigator.onLine){
-
+            // Hiện modal báo lỗi (đã hiển thị được nhờ z-index cao hơn)
             document.getElementById("noInternetModal").classList.add("active");
-
             return;
-
         }
 
-        // có internet
+        // NẾU CÓ INTERNET:
+        // 1. Đóng modal thông báo mất mạng (nếu đang mở)
+        document.getElementById("noInternetModal").classList.remove("active");
+
+        // 2. Hiện trạng thái "Đang kết nối..."
         document.getElementById("splashText").classList.remove("hidden");
 
+        // 3. Tiến hành gọi server tải dữ liệu
         refreshDataFromServer();
-
     }
 
 </script>
