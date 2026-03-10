@@ -851,7 +851,7 @@
     closeIncomeModal();
 
     // ẩn trang chính
-    document.querySelector(".container").classList.add("hidden");
+    document.querySelector(".container").style.display = "none";
 
     // hiện trang chi tiết
     document.getElementById("incomePage").classList.remove("hidden");
@@ -867,7 +867,7 @@
 
     function closeIncomePage(){
     document.getElementById("incomePage").classList.add("hidden");
-    document.querySelector(".container").classList.remove("hidden");
+    document.querySelector(".container").style.display = "block";
     }
 
     /* ===== KIỂM TRA INTERNET ===== */
