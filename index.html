@@ -271,6 +271,10 @@
             margin-top:10px;
         }
 
+        .hidden{
+        display:none;
+        }
+
     </style>
 </head>
 <body>
@@ -731,32 +735,51 @@
 
     callAPI("getIncomeDetails").then(res=>{
 
-    let win = window.open("");
-
     let html = `
-    <h2>Bảng Thu Nhập</h2>
-    <table border="1" style="width:100%;text-align:center">
-    <tr>
-    <th>Tháng</th>
-    <th>Links</th>
-    <th>Points</th>
+    <table style="
+    width:100%;
+    border-collapse:collapse;
+    text-align:center;
+    margin-top:10px;
+    ">
+
+    <tr style="background:#f5f5f5;font-weight:bold">
+    <th style="padding:8px;border:1px solid #ddd">Tháng</th>
+    <th style="padding:8px;border:1px solid #ddd">Links</th>
+    <th style="padding:8px;border:1px solid #ddd">Points</th>
     </tr>
     `;
 
     res.rows.forEach(r=>{
     html += `
     <tr>
-    <td>${r.month}</td>
-    <td>${r.links}</td>
-    <td>${r.points}¥</td>
+    <td style="padding:8px;border:1px solid #ddd">${r.month}</td>
+    <td style="padding:8px;border:1px solid #ddd">${r.links}</td>
+    <td style="padding:8px;border:1px solid #ddd">${r.points}¥</td>
     </tr>
     `;
     });
 
     html += "</table>";
 
-    win.document.write(html);
+    document.getElementById("incomeTable").innerHTML = html;
+
+    // đóng modal
+    closeIncomeModal();
+
+    // ẩn trang chính
+    document.querySelector(".container").classList.add("hidden");
+
+    // hiện trang chi tiết
+    document.getElementById("incomePage").classList.remove("hidden");
+
     });
+
+    }
+
+    function closeIncomePage(){
+    document.getElementById("incomePage").classList.add("hidden");
+    document.querySelector(".container").classList.remove("hidden");
     }
 
 </script>
@@ -810,7 +833,21 @@ if ("ontouchstart" in window) {
 <button onclick="closeIncomeModal()">OK</button>
 <button onclick="openIncomeDetails()">Chi Tiết</button>
 </div>
+</div>
+</div>
 
+<!-- Trang Chi Tiết Thu Nhập -->
+<div id="incomePage" class="hidden">
+<div style="padding:12px">
+<button onclick="closeIncomePage()" style="
+background:#2196F3;
+color:white;
+width:120px;
+margin-bottom:10px;">
+⬅ Quay Lại
+</button>
+<h2 style="text-align:center;">Chi Tiết Thu Nhập</h2>
+<div id="incomeTable"></div>
 </div>
 </div>
 
