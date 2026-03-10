@@ -424,6 +424,8 @@
     /* Lấy toàn bộ dữ liệu từ Server */
     function refreshDataFromServer() {
 
+    document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+
         callAPI("loadAllItems").then(data => {
 
             if(data) {
