@@ -105,6 +105,12 @@
             font-weight: bold;
         }
 
+        .income-btn {
+            background: #f44336;
+            color: white;
+            font-weight: bold;
+        }
+
         /* ===== ĐỊNH DẠNG CỬA SỔ MODAL (XÁC NHẬN XÓA) ===== */
         
         /* Nền mờ của Modal */
@@ -223,6 +229,48 @@
             cursor: not-allowed;
         }
 
+        /* ===== Modal báo cáo thu nhập đẹp hơn ===== */
+
+        .income-row{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px 4px;
+            border-bottom:1px solid #eee;
+            font-size:16px;
+        }
+
+        .income-left{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            color:#555;
+        }
+
+        .income-right{
+            font-weight:bold;
+            color:#222;
+        }
+
+        .income-icon{
+            font-size:18px;
+        }
+
+        .income-total{
+            font-size:18px;
+            color:#d32f2f;
+        }
+
+        .income-title{
+            margin-bottom:10px;
+            font-size:18px;
+            font-weight:bold;
+        }
+
+        #incomeContent{
+            margin-top:10px;
+        }
+
     </style>
 </head>
 <body>
@@ -241,6 +289,10 @@
         Mục Đã Xử Lý
     </button>
     <div id="doneSection" class="hidden"></div>
+
+    <button id="incomeBtn" class="income-btn" onclick="openIncomeModal()">
+    📊 Báo Cáo Thu Nhập
+    </button>
 
     <button id="deleteBtn" class="delete-done-btn" onclick="openModal()">
         Xóa Dữ Liệu Đã Xử Lý
@@ -269,6 +321,7 @@
     /* Biến lưu trữ dữ liệu tạm thời */
     let pendingItems = [];
     let doneItems = [];
+    let isLoadingIncome = false;
 
     /**
      * Hàm gọi API dùng chung
@@ -343,6 +396,12 @@
 
             if(res && res.totalLinks > 0){
                 text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
+
+                callAPI("updateIncome",{
+                    links: res.totalLinks,
+                    points: res.totalPoints
+                });
+
             }
 
             btn.innerHTML = text;
@@ -601,6 +660,105 @@
         if (val !== "") btn.classList.add("enabled"); 
         else btn.classList.remove("enabled");
     }
+
+    function openIncomeModal(){
+
+        if(isLoadingIncome) return;
+
+        isLoadingIncome = true;
+
+        const btn = document.getElementById("incomeBtn");
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+
+        callAPI("getIncomeReport").then(res=>{
+
+            let html = `
+
+            <div class="income-row">
+            <div class="income-left">
+            <span class="income-icon">📅</span>
+            <span>Tháng</span>
+            </div>
+            <div class="income-right">${res.month}</div>
+            </div>
+
+            <div class="income-row">
+            <div class="income-left">
+            <span class="income-icon">💰</span>
+            <span>Tổng point</span>
+            </div>
+            <div class="income-right income-total">${res.points}¥</div>
+            </div>
+
+            <div class="income-row">
+            <div class="income-left">
+            <span class="income-icon">🔗</span>
+            <span>Link đã xử lý</span>
+            </div>
+            <div class="income-right">${res.links}</div>
+            </div>
+
+            <div class="income-row">
+            <div class="income-left">
+            <span class="income-icon">📈</span>
+            <span>Thu nhập năm</span>
+            </div>
+            <div class="income-right income-total">${res.yearPoints}¥</div>
+            </div>
+            `;
+
+            document.getElementById("incomeContent").innerHTML = html;
+
+            document.getElementById("incomeModal").classList.add("active");
+
+            // trả nút về trạng thái ban đầu
+            btn.innerHTML = "📊 Báo Cáo Thu Nhập";
+            btn.disabled = false;
+
+            isLoadingIncome = false;
+
+        });
+
+    }
+
+    function closeIncomeModal(){
+    document.getElementById("incomeModal").classList.remove("active");
+    }
+
+    function openIncomeDetails(){
+
+    callAPI("getIncomeDetails").then(res=>{
+
+    let win = window.open("");
+
+    let html = `
+    <h2>Bảng Thu Nhập</h2>
+    <table border="1" style="width:100%;text-align:center">
+    <tr>
+    <th>Tháng</th>
+    <th>Links</th>
+    <th>Points</th>
+    </tr>
+    `;
+
+    res.rows.forEach(r=>{
+    html += `
+    <tr>
+    <td>${r.month}</td>
+    <td>${r.links}</td>
+    <td>${r.points}¥</td>
+    </tr>
+    `;
+    });
+
+    html += "</table>";
+
+    win.document.write(html);
+    });
+    }
+
 </script>
 
 <script>
@@ -640,6 +798,21 @@ if ("ontouchstart" in window) {
     });
 }
 </script>
-    
+
+<div id="incomeModal" class="modal">
+<div class="modal-box">
+
+<h3>Báo Cáo Thu Nhập</h3>
+
+<div id="incomeContent"></div>
+
+<div class="modal-actions">
+<button onclick="closeIncomeModal()">OK</button>
+<button onclick="openIncomeDetails()">Chi Tiết</button>
+</div>
+
+</div>
+</div>
+
 </body>
 </html>
