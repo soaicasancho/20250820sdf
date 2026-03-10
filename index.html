@@ -175,6 +175,27 @@
             margin-top: 18px;
         }
 
+        /* nút trong modal báo cáo */
+        .modal-actions button{
+            flex:1;
+            background:#e0e0e0;
+            color:#333;
+            font-weight:bold;
+            border-radius:10px;
+            transition:0.2s;
+        }
+
+        /* hiệu ứng hover */
+        .modal-actions button:hover{
+            background:#d5d5d5;
+        }
+
+        /* khi disabled */
+        .modal-actions button:disabled{
+            background:#bdbdbd !important;
+            color:#666 !important;
+        }
+
         /* Nút xác nhận xóa */
         .confirm-btn {
             background: #f44336;
@@ -733,6 +754,16 @@
 
     function openIncomeDetails(){
 
+    const btn = event.target;
+    const okBtn = btn.previousElementSibling;
+
+    // khóa cả 2 nút
+    btn.disabled = true;
+    okBtn.disabled = true;
+
+    // hiệu ứng loading
+    btn.innerHTML = '<span class="spinner"></span>Đang tải...';
+
     callAPI("getIncomeDetails").then(res=>{
 
     let html = `
@@ -772,6 +803,11 @@
 
     // hiện trang chi tiết
     document.getElementById("incomePage").classList.remove("hidden");
+
+    // reset nút
+    btn.innerHTML = "Chi Tiết";
+    btn.disabled = false;
+    okBtn.disabled = false;
 
     });
 
