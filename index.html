@@ -292,8 +292,17 @@
             margin-top:10px;
         }
 
-        .hidden{
-        display:none;
+        .back-btn{
+            background:#2196F3;
+            color:white;
+
+            width:120px;        /* nhỏ lại */
+            padding:8px 10px;   /* giảm chiều cao */
+
+            margin-top:20px;
+            margin-left:0;      /* căn trái */
+
+            display:block;
         }
 
     </style>
@@ -712,7 +721,7 @@
             <div class="income-row">
             <div class="income-left">
             <span class="income-icon">💰</span>
-            <span>Tổng point</span>
+            <span>Số Tiền</span>
             </div>
             <div class="income-right income-total">${res.points}¥</div>
             </div>
@@ -777,7 +786,7 @@
     <tr style="background:#f5f5f5;font-weight:bold">
     <th style="padding:8px;border:1px solid #ddd">Tháng</th>
     <th style="padding:8px;border:1px solid #ddd">Links</th>
-    <th style="padding:8px;border:1px solid #ddd">Points</th>
+    <th style="padding:8px;border:1px solid #ddd">Số Tiền</th>
     </tr>
     `;
 
@@ -875,15 +884,11 @@ if ("ontouchstart" in window) {
 <!-- Trang Chi Tiết Thu Nhập -->
 <div id="incomePage" class="hidden">
 <div style="padding:12px">
-<button onclick="closeIncomePage()" style="
-background:#2196F3;
-color:white;
-width:120px;
-margin-bottom:10px;">
-⬅ Quay Lại
-</button>
 <h2 style="text-align:center;">Chi Tiết Thu Nhập</h2>
 <div id="incomeTable"></div>
+<button class="back-btn" onclick="closeIncomePage()">
+Quay Lại
+</button>
 </div>
 </div>
 
