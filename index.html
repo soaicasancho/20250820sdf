@@ -898,20 +898,19 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log("SW Error:", err));
 }
 
-/* ===== kéo xuống để cập nhật lại trang (Silent Version) ===== */
-
+/* ===== Kéo xuống để cập nhật lại trang (Đã sửa lỗi) ===== */
 let startY = 0;
 let isPulling = false;
 const threshold = 60; // khoảng kéo tối thiểu
 
 if ("ontouchstart" in window) {
-
     document.addEventListener("touchstart", function(e) {
-        if (window.scrollY === 0) { // chỉ khi đang ở đầu trang
+        // Cho phép sai số nhỏ (<= 5) thay vì === 0 do hiệu ứng nảy trên mobile
+        if (window.scrollY <= 5) { 
             startY = e.touches[0].clientY;
             isPulling = true;
         }
-    });
+    }, { passive: true });
 
     document.addEventListener("touchend", function(e) {
         if (!isPulling) return;
@@ -919,14 +918,23 @@ if ("ontouchstart" in window) {
         let endY = e.changedTouches[0].clientY;
         let distance = endY - startY;
 
+        // Nếu vuốt xuống vượt quá 60px thì kích hoạt load lại
         if (distance > threshold) {
-            refreshDataFromServer(); // cập nhật âm thầm
+            refreshDataFromServer(); 
         }
 
+        // Reset trạng thái
+        isPulling = false;
+        startY = 0;
+    });
+
+    // Bổ sung: Xử lý trường hợp hệ điều hành ngắt thao tác cảm ứng
+    document.addEventListener("touchcancel", function() {
         isPulling = false;
         startY = 0;
     });
 }
+    
 </script>
 
 <div id="incomeModal" class="modal">
