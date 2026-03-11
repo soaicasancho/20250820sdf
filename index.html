@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,14 +14,15 @@
     <meta name="apple-mobile-web-app-title" content="AutoScan">
 
     <style>
-        /* Thiết lập cơ bản cho toàn bộ trang */
+        /* =========================================
+           1. CƠ BẢN & BỐ CỤC CHUNG
+           ========================================= */
         body {
             margin: 0;
-            font-family: Arial;
-            background: #ffffff; /* hoặc white */
+            font-family: Arial, sans-serif;
+            background: #ffffff;
         }
 
-        /* Khung chứa nội dung chính */
         .container {
             width: 100%;
             max-width: 100%;
@@ -29,12 +30,13 @@
             box-sizing: border-box;
         }
 
-        /* Tiêu đề chính */
         h1 {
             text-align: center;
         }
 
-        /* Định dạng chung cho tất cả các nút bấm */
+        /* =========================================
+           2. NÚT BẤM (BUTTONS)
+           ========================================= */
         button {
             width: 95%;
             padding: 14px;
@@ -46,21 +48,59 @@
             display: block;
         }
 
-        /* Nút chức năng chính (Kiểm tra Gmail) */
+        button:disabled {
+            background: #bdbdbd !important;
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+
         .main-btn {
             background: #2196F3;
             color: white;
             font-weight: bold;
         }
 
-        /* Tiêu đề của mục chưa xử lý */
+        /* CSS nút Xóa và Thu nhập */
+        .delete-done-btn, 
+        .income-btn {
+            background: #f44336;
+            color: white;
+            font-weight: bold;
+        }
+
+        .back-btn {
+            background: #2196F3;
+            color: white;
+            width: 120px;
+            padding: 8px 10px;
+            margin-top: 20px;
+            margin-left: 0;
+            display: block;
+        }
+
+        .bottom-buttons {
+            display: flex;
+            width: 95%;
+            margin: 8px auto;
+            gap: 10px;
+        }
+
+        .bottom-buttons button {
+            flex: 1;
+            width: auto;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        /* =========================================
+           3. DANH SÁCH MỤC (LIST ITEMS)
+           ========================================= */
         .pending-header {
             background: #4CAF50;
             color: white;
             font-weight: bold;
         }
 
-        /* Từng mục nhỏ trong danh sách chờ */
         .pending-item {
             background: #90CAF9;
             color: #0D47A1;
@@ -68,15 +108,13 @@
             display: block;
             margin: 6px auto;
         }
-
-        /* Tiêu đề của mục đã xử lý */
+        
         .done-header {
             background: #FFC107;
             color: #333;
             font-weight: bold;
         }
 
-        /* Từng mục nhỏ trong danh sách đã hoàn thành */
         .done-item {
             background: #e0e0e0;
             color: #555;
@@ -85,52 +123,22 @@
             margin: 6px auto;
         }
 
-        /* Lớp ẩn phần tử */
-        .hidden {
-            display: none;
-        }
-
-        /* Thông báo trạng thái thành công */
-        .success {
-            text-align: center;
-            margin: 10px 0 15px 0;
-            color: green;
-            font-weight: bold;
-        }
-
-        /* Nút xóa dữ liệu */
-        .delete-done-btn {
-            background: #f44336;
-            color: white;
-            font-weight: bold;
-        }
-
-        .income-btn {
-            background: #f44336;
-            color: white;
-            font-weight: bold;
-        }
-
-        /* ===== ĐỊNH DẠNG CỬA SỔ MODAL (XÁC NHẬN XÓA) ===== */
-        
-        /* Nền mờ của Modal */
+        /* =========================================
+           4. CỬA SỔ MODAL (MODALS)
+           ========================================= */
         .modal {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.45);
-            display: none;
+            display: none; /* Sử dụng class .active để hiện */
             justify-content: center;
             align-items: center;
             z-index: 6000;
             backdrop-filter: blur(2px);
         }
 
-        /* Khi Modal ở trạng thái hiển thị */
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
 
-        /* Hộp nội dung bên trong Modal */
         .modal-box {
             background: white;
             width: 95%;
@@ -142,12 +150,10 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        /* Khung bao quanh ô nhập mật khẩu */
         .password-wrapper {
             position: relative;
         }
-        
-        /* Ô nhập liệu mật khẩu */
+
         .modal-box input {
             width: 100%;
             padding: 12px 40px 12px 12px;
@@ -158,858 +164,686 @@
             box-sizing: border-box;
         }
 
-        /* Biểu tượng con mắt để ẩn/hiện mật khẩu */
         .eye-icon {
             position: absolute;
-            right: 10px;
+            right: 12px;
             top: 60%;
             transform: translateY(-50%);
             cursor: pointer;
             font-size: 18px;
         }
 
-        /* Khung chứa các nút hành động trong Modal */
         .modal-actions {
             display: flex;
             gap: 10px;
             margin-top: 18px;
         }
 
-        /* nút trong modal báo cáo */
-        .modal-actions button{
-            flex:1;
-            background:#e0e0e0;
-            color:#333;
-            font-weight:bold;
-            border-radius:10px;
-            transition:0.2s;
+        .modal-actions button {
+            flex: 1;
+            background: #e0e0e0;
+            color: #333;
+            font-weight: bold;
+            border-radius: 10px;
+            transition: 0.2s;
         }
 
-        /* hiệu ứng hover */
-        .modal-actions button:hover{
-            background:#d5d5d5;
+        .modal-actions button:hover {
+            background: #d5d5d5;
         }
 
-        /* khi disabled */
-        .modal-actions button:disabled{
-            background:#bdbdbd !important;
-            color:#666 !important;
-        }
-
-        /* Nút xác nhận xóa */
         .confirm-btn {
             background: #f44336;
             color: white;
-            flex: 1;
             opacity: 0.5;
         }
 
-        /* Nút xác nhận khi đã nhập mật khẩu */
         .confirm-btn.enabled {
             opacity: 1;
         }
 
-        /* Nút hủy bỏ */
         .cancel-btn {
             background: #9e9e9e;
             color: white;
-            flex: 1;
         }
 
-        /* Chữ thông báo lỗi */
+        /* =========================================
+           5. GIAO DIỆN BÁO CÁO THU NHẬP
+           ========================================= */
+        .income-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 4px;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+        }
+
+        .income-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #555;
+        }
+
+        .income-right {
+            font-weight: bold;
+            color: #222;
+        }
+
+        .income-icon {
+            font-size: 18px;
+        }
+
+        .income-total {
+            font-size: 18px;
+            color: #d32f2f;
+        }
+
+        .income-title {
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #incomeContent {
+            margin-top: 10px;
+        }
+
+        /* =========================================
+           6. MÀN HÌNH CHỜ (SPLASH SCREEN)
+           ========================================= */
+        #splashScreen {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .splash-logo {
+            width: 250px;
+            height: auto;
+        }
+
+        .splash-text {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* =========================================
+           7. TIỆN ÍCH (UTILITIES & ANIMATIONS)
+           ========================================= */
+        .hidden {
+            display: none !important;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+        
+        .success {
+            text-align: center;
+            margin: 10px 0 15px 0;
+            color: green;
+            font-weight: bold;
+        }
+
         .error-text {
             color: red;
             margin-top: 8px;
             font-size: 14px;
         }
 
-        /* Khóa cuộn trang khi mở Modal */
-        body.modal-open {
-            overflow: hidden;
-        }
-
         .spinner {
-          display: inline-block;
-          width: 16px;
-          height: 16px;
-          border: 3px solid #ddd;
-          border-top: 3px solid #333;
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-          margin-right: 6px;
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #ddd;
+            border-top: 3px solid #333;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 6px;
         }
 
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-
-        button:disabled {
-            background: #bdbdbd !important;
-            color: #666 !important;
-            cursor: not-allowed;
-        }
-
-        /* ===== Modal báo cáo thu nhập đẹp hơn ===== */
-
-        .income-row{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:10px 4px;
-            border-bottom:1px solid #eee;
-            font-size:16px;
-        }
-
-        .income-left{
-            display:flex;
-            align-items:center;
-            gap:8px;
-            color:#555;
-        }
-
-        .income-right{
-            font-weight:bold;
-            color:#222;
-        }
-
-        .income-icon{
-            font-size:18px;
-        }
-
-        .income-total{
-            font-size:18px;
-            color:#d32f2f;
-        }
-
-        .income-title{
-            margin-bottom:10px;
-            font-size:18px;
-            font-weight:bold;
-        }
-
-        #incomeContent{
-            margin-top:10px;
-        }
-
-        .back-btn{
-            background:#2196F3;
-            color:white;
-
-            width:120px;        /* nhỏ lại */
-            padding:8px 10px;   /* giảm chiều cao */
-
-            margin-top:20px;
-            margin-left:0;      /* căn trái */
-
-            display:block;
-        }
-
-        /* ===== Splash Screen ===== */
-
-        #splashScreen{
-            position:fixed;
-            inset:0;
-            background:white;
-            z-index:5000;
-
-            display:flex;
-            flex-direction:column;
-            justify-content:center;
-            align-items:center;
-        }
-
-        .splash-logo{
-            width:250px;
-            height:auto;
-        }
-
-        .splash-text{
-            margin-top:20px;
-            font-size:16px;
-            color:#555;
-        }
-
-        /* ===== 2 nút cuối trang ===== */
-
-        .bottom-buttons{
-            display:flex;
-            width:95%;          /* giống width của button phía trên */
-            margin:8px auto;    /* căn giữa giống button */
-            gap:10px;
-        }
-
-        .bottom-buttons button{
-            flex:1;
-            width:auto;
-            margin:0;
-            white-space:nowrap; /* không cho chữ xuống dòng */
-        }
-
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Auto Scan System</h1>
-
-    <button id="checkBtn" class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
-
-    <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
-        Chưa Xử Lý
-    </button>
-    <div id="pendingSection"></div>
-
-    <button id="doneHeaderBtn" class="done-header" onclick="toggleSection('done')">
-        Đã Xử Lý
-    </button>
-    <div id="doneSection" class="hidden"></div>
-
-    <div class="bottom-buttons">
-
-    <button id="incomeBtn" class="income-btn" onclick="openIncomeModal()">
-    Xem Thu Nhập
-    </button>
-
-    <button id="deleteBtn" class="delete-done-btn" onclick="openModal()">
-    Xóa Dữ Liệu
-    </button>
-
-</div>
-    </div>
-
-<div id="passwordModal" class="modal hidden" onclick="outsideClick(event)">
-    <div class="modal-box">
-        <h3>Xác nhận xóa dữ liệu</h3>
-        <div style="position:relative;">
-            <input type="password" id="modalPassword" placeholder="Nhập mật khẩu" oninput="checkInput()" onkeydown="handleEnter(event)">
-            <span id="eyeIcon" onclick="togglePassword()" style="position:absolute; right:12px; top:60%; transform:translateY(-50%); cursor:pointer;">👁</span>
-        </div>
-        <div id="modalError" class="error-text"></div>
-        <div class="modal-actions">
-            <button id="confirmBtn" class="confirm-btn" onclick="confirmDelete()" disabled>Xác nhận</button>
-            <button class="cancel-btn" onclick="closeModal()">Hủy</button>
+    <div id="splashScreen">
+        <img src="Logo.png" alt="Logo" class="splash-logo">
+        <div id="splashText" class="splash-text hidden">
+            <span class="spinner"></span>Đang kết nối máy chủ...
         </div>
     </div>
-</div>
 
-<script>
-    /* 🔥 Cấu hình API Google Script */
-    const API_URL = "https://script.google.com/macros/s/AKfycby1xJPxtD024J-MMLLIWGMlcJXPzOm5lNUxVJcua-ST_YBNmLbPWSyRvuJtGYELfO4x/exec";
+    <div class="container" style="display: none;"> 
+        <h1>Auto Scan System</h1>
 
-    /* Biến lưu trữ dữ liệu tạm thời */
-    let pendingItems = [];
-    let doneItems = [];
-    let isLoadingIncome = false;
+        <button id="checkBtn" class="main-btn" onclick="runProcess()">Kiểm Tra Email</button>
 
-    /**
-     * Hàm gọi API dùng chung
-     */
-    async function callAPI(action, data = {}) {
-        data.action = action;
-        try {
-            let response = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(data)
-            });
-            return await response.json();
-        } catch (error) {
-            console.error("Lỗi API:", error);
-            return null;
-        }
-    }
+        <button id="pendingHeaderBtn" class="pending-header" onclick="toggleSection('pending')">
+            Chưa Xử Lý
+        </button>
+        <div id="pendingSection" class="hidden"></div>
 
-    /* 1. TỰ ĐỘNG TẢI DỮ LIỆU KHI TRANG WEB MỞ */
-    window.onload = function() {
+        <button id="doneHeaderBtn" class="done-header" onclick="toggleSection('done')">
+            Đã Xử Lý
+        </button>
+        <div id="doneSection" class="hidden"></div>
 
-        // ẩn app
-        document.querySelector(".container").style.display = "none";
+        <div class="bottom-buttons">
+            <button id="incomeBtn" class="income-btn" onclick="openIncomeModal()">
+                Xem Thu Nhập
+            </button>
+            <button id="deleteBtn" class="delete-done-btn" onclick="openModal()">
+                Xóa Dữ Liệu
+            </button>
+        </div>
+    </div>
 
-        // chạy kiểm tra internet
-        checkInternet();
+    <div id="incomePage" class="hidden">
+        <div style="padding: 12px;">
+            <h2 style="text-align: center;">Chi Tiết Thu Nhập</h2>
+            <div id="incomeTable"></div>
+            <button class="back-btn" onclick="closeIncomePage()">Quay Lại</button>
+        </div>
+    </div>
 
-    };
+    <div id="passwordModal" class="modal" onclick="outsideClick(event)">
+        <div class="modal-box">
+            <h3>Xác nhận xóa dữ liệu</h3>
+            <div class="password-wrapper">
+                <input type="password" id="modalPassword" placeholder="Nhập mật khẩu" oninput="checkInput()" onkeydown="handleEnter(event)">
+                <span id="eyeIcon" class="eye-icon" onclick="togglePassword()">👁</span>
+            </div>
+            <div id="modalError" class="error-text"></div>
+            <div class="modal-actions">
+                <button id="confirmBtn" class="confirm-btn" onclick="confirmDelete()" disabled>Xác nhận</button>
+                <button class="cancel-btn" onclick="closeModal()">Hủy</button>
+            </div>
+        </div>
+    </div>
 
-    /* Tạo hàm hiển thị Loading */
-    function showLoading(target, text){
-      document.getElementById(target).innerHTML =
-      '<span class="spinner"></span>' + text;
-    }
+    <div id="incomeModal" class="modal">
+        <div class="modal-box">
+            <h3>Báo Cáo Thu Nhập</h3>
+            <div id="incomeContent"></div>
+            <div class="modal-actions">
+                <button onclick="closeIncomeModal()">OK</button>
+                <button onclick="openIncomeDetails()">Chi Tiết</button>
+            </div>
+        </div>
+    </div>
 
-    function hideLoading(target){
-      document.getElementById(target).innerHTML="";
-    }
+    <div id="noInternetModal" class="modal">
+        <div class="modal-box">
+            <h3>⚠ Thông báo hệ thống</h3>
+            <p style="color: #555; margin-top: 10px;">
+                Kết nối internet yếu hoặc máy chủ không phản hồi.<br>
+                Vui lòng kiểm tra và thử lại.
+            </p>
+            <div class="modal-actions">
+                <button onclick="checkInternet()">Kiểm Tra Lại</button>
+            </div>
+        </div>
+    </div>
 
-    /* Lấy toàn bộ dữ liệu từ Server */
-    function refreshDataFromServer() {
+    <script>
+        /* 🔥 Cấu hình API Google Script */
+        const API_URL = "https://script.google.com/macros/s/AKfycby1xJPxtD024J-MMLLIWGMlcJXPzOm5lNUxVJcua-ST_YBNmLbPWSyRvuJtGYELfO4x/exec";
 
-    document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+        /* Biến lưu trữ trạng thái và dữ liệu tạm thời */
+        let pendingItems = [];
+        let doneItems = [];
+        let isLoadingIncome = false;
+        let isProcessing = false;
 
-        callAPI("loadAllItems").then(data => {
-
-            if(data) {
-
-                pendingItems = data.pending || [];
-                doneItems = data.done || [];
-
-                renderPending();
-                renderDone();
-                updatePendingHeader();
-
-            } else {
-
-                document.getElementById("pendingSection").innerHTML =
-                "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!";
-
-            }
-
-            /* ✅ Ẩn Splash khi dữ liệu load xong */
-
-            document.getElementById("splashScreen").style.display = "none";
-            document.querySelector(".container").style.display = "block";
-
-        });
-
-    }
-
-    /* 2. KÍCH HOẠT QUÉT MAIL MỚI */
-    let isProcessing = false;
-
-    function runProcess() {
-
-        if(isProcessing) return;
-
-        isProcessing = true;
-
-        const btn = document.getElementById("checkBtn");
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span>Đang kiểm tra email...';
-
-        callAPI("processTikTokGiftEmails").then(res => {
-
-            let text = "Không có email mới nào.";
-
-            if(res && res.totalLinks > 0){
-                text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
-
-                callAPI("updateIncome",{
-                    links: res.totalLinks,
-                    points: res.totalPoints
+        /* =======================================
+           1. HÀM GỌI API DÙNG CHUNG
+           ======================================= */
+        async function callAPI(action, data = {}) {
+            data.action = action;
+            try {
+                let response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(data)
                 });
-
-            }
-
-            btn.innerHTML = text;
-
-            if(res && res.items){
-                res.items.forEach(newItem => {
-
-                    let isDuplicate =
-                        pendingItems.some(i => i.link === newItem.link) ||
-                        doneItems.some(i => i.link === newItem.link);
-
-                    if (!isDuplicate) pendingItems.push(newItem);
-
-                });
-
-                renderPending();
-            }
-
-            setTimeout(()=>{
-
-                btn.innerHTML = "Kiểm Tra Email";
-                btn.disabled = false;
-                isProcessing = false;
-
-            },10000);
-
-        });
-
-    }
-
-    /* 4. HIỂN THỊ DANH SÁCH CHƯA XỬ LÝ (HTML) */
-    function renderPending() {
-        let html = "";
-        if (pendingItems.length === 0) {
-            html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
-        } else {
-            pendingItems.forEach((item, index) => {
-                html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
-                    ${item.points}¥ (${item.expiry})
-                </button>`;
-            });
-        }
-        document.getElementById("pendingSection").innerHTML = html;
-        updatePendingHeader();
-    }
-
-    /* Cập nhật số tiền tổng cộng trên tiêu đề */
-    function updatePendingHeader() {
-
-        let header = document.getElementById("pendingHeaderBtn");
-
-        if (pendingItems.length === 0) {
-            header.innerText = "Chưa Xử Lý";
-            return;
-        }
-
-        let totalPoints = pendingItems.reduce((sum, item) => {
-            return sum + (parseInt(item.points) || 0);
-        }, 0);
-
-        let totalLinks = pendingItems.length;
-
-        header.innerText = `Chưa Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
-    }
-
-    function updateDoneHeader() {
-
-        let header = document.getElementById("doneHeaderBtn");
-
-        if (doneItems.length === 0) {
-            header.innerText = "Đã Xử Lý";
-            return;
-        }
-
-        let totalPoints = doneItems.reduce((sum, item) => {
-            return sum + (parseInt(item.points) || 0);
-        }, 0);
-
-        let totalLinks = doneItems.length;
-
-        header.innerText = `Đã Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
-    }
-    
-    /* 5. HIỂN THỊ DANH SÁCH ĐÃ XỬ LÝ (HTML) */
-    function renderDone() {
-
-        let html = "";
-
-        if (doneItems.length === 0) {
-
-            html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
-
-        } else {
-
-            doneItems.forEach(item => {
-
-                    html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">
-                    ${item.points}¥ - ${item.processTime}
-                </button>`;
-
-            });
-
-        }
-
-        document.getElementById("doneSection").innerHTML = html;
-
-        updateDoneHeader();
-    }
-
-    /* 6. XỬ LÝ KHI BẤM VÀO MỘT LINK */
-    function openAndMarkDone(index) {
-        let item = pendingItems[index];
-        window.open(item.link, "_blank");
-
-        let now = new Date();
-        let timeString = now.getHours().toString().padStart(2,'0') + ":" + 
-                         now.getMinutes().toString().padStart(2,'0') + " " + 
-                         now.getDate().toString().padStart(2,'0') + "/" + 
-                         (now.getMonth()+1).toString().padStart(2,'0');
-
-        // Gửi lệnh cập nhật trạng thái lên Server
-        callAPI("markAsDone", { id: item.id, processTime: timeString });
-
-        item.processTime = timeString;
-        doneItems.unshift(item);
-        pendingItems.splice(index, 1);
-        renderPending();
-        renderDone();
-    }
-
-    /* CÁC HÀM ĐIỀU KHIỂN GIAO DIỆN (UI) */
-    
-    // Ẩn hiện các mục
-    function toggleSection(section) {
-        const pending = document.getElementById("pendingSection");
-        const done = document.getElementById("doneSection");
-
-        const isPendingOpen = !pending.classList.contains("hidden");
-        const isDoneOpen = !done.classList.contains("hidden");
-
-        if (section === "pending") {
-            if (isPendingOpen) {
-                // Nếu pending đang mở → đóng cả 2
-                pending.classList.add("hidden");
-                done.classList.add("hidden");
-            } else {
-                // Nếu pending đang đóng → mở pending và đóng done
-                pending.classList.remove("hidden");
-                done.classList.add("hidden");
-            }
-        } else if (section === "done") {
-            if (isDoneOpen) {
-                // Nếu done đang mở → đóng cả 2
-                pending.classList.add("hidden");
-                done.classList.add("hidden");
-            } else {
-                // Nếu done đang đóng → mở done và đóng pending
-                done.classList.remove("hidden");
-                pending.classList.add("hidden");
+                return await response.json();
+            } catch (error) {
+                console.error("Lỗi API:", error);
+                return null;
             }
         }
-    }
 
-    // Mở Modal mật khẩu
-    function openModal() {
-        document.getElementById("passwordModal").classList.add("active");
-        document.body.classList.add("modal-open");
-        document.getElementById("modalPassword").value = "";
-        document.getElementById("modalError").innerText = "";
-        document.getElementById("confirmBtn").disabled = true;
-    }
+        /* =======================================
+           2. TỰ ĐỘNG KHỞI TẠO DỮ LIỆU KHI MỞ TRANG
+           ======================================= */
+        window.onload = function() {
+            // Chạy kiểm tra internet đầu tiên
+            checkInternet();
+        };
 
-    // Đóng Modal mật khẩu
-    function closeModal() {
-        document.getElementById("passwordModal").classList.remove("active");
-        document.body.classList.remove("modal-open");
-    }
-
-    // Đóng modal khi bấm ra ngoài vùng trắng
-    function outsideClick(event) { 
-        if (event.target.id === "passwordModal") closeModal(); 
-    }
-
-    // Cho phép nhấn Enter để xác nhận
-    function handleEnter(event) { 
-        if (event.key === "Enter" && !document.getElementById("confirmBtn").disabled) confirmDelete(); 
-    }
-
-    // Ẩn hiện ký tự mật khẩu
-    function togglePassword() {
-        const input = document.getElementById("modalPassword");
-        const eye = document.getElementById("eyeIcon");
-        if (input.type === "password") { 
-            input.type = "text"; 
-            eye.textContent = "👁️"; 
-        } else { 
-            input.type = "password"; 
-            eye.textContent = "👀"; 
+        /* Kiểm tra kết nối Internet */
+        function checkInternet() {
+            if (!navigator.onLine) {
+                document.getElementById("noInternetModal").classList.add("active");
+                return;
+            }
+            
+            // Nếu CÓ internet: Ẩn modal mất mạng, hiện text loading và gọi Server
+            document.getElementById("noInternetModal").classList.remove("active");
+            document.getElementById("splashText").classList.remove("hidden");
+            refreshDataFromServer();
         }
-    }
 
-    // Xác nhận mật khẩu và xóa dữ liệu
-    function confirmDelete() {
+        /* Tiện ích hiển thị Loading HTML */
+        function showLoading(target, text) {
+            document.getElementById(target).innerHTML = '<span class="spinner"></span>' + text;
+        }
 
-        let password = document.getElementById("modalPassword").value;
+        function hideLoading(target) {
+            document.getElementById(target).innerHTML = "";
+        }
 
-        if (password === "8322") {
+        /* =======================================
+           3. LẤY TOÀN BỘ DỮ LIỆU TỪ SERVER
+           ======================================= */
+        function refreshDataFromServer() {
+            document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
 
-            closeModal();
+            callAPI("loadAllItems").then(data => {
+                if(data) {
+                    pendingItems = data.pending || [];
+                    doneItems = data.done || [];
 
-            const deleteBtn = document.getElementById("deleteBtn");
-
-            deleteBtn.disabled = true;
-            deleteBtn.innerHTML = '<span class="spinner"></span>Đang xóa dữ liệu...';
-
-            callAPI("clearDoneItems").then(res => {
-
-                if(res && res.success){
-
-                    deleteBtn.innerHTML = "✅ Đã xóa dữ liệu thành công";
-
-                    setTimeout(() => {
-
-                        deleteBtn.innerHTML = "Xóa Dữ Liệu";
-                        deleteBtn.disabled = false;
-
-                        refreshDataFromServer();
-
-                    }, 2000);
-
+                    renderPending();
+                    renderDone();
+                    updatePendingHeader();
                 } else {
-
-                    deleteBtn.innerHTML = "❌ Lỗi xóa dữ liệu";
-
-                    setTimeout(() => {
-                        deleteBtn.innerHTML = "Xóa Dữ Liệu";
-                        deleteBtn.disabled = false;
-                    },2000);
-
+                    document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
                 }
 
+                // Ẩn màn hình chờ (Splash Screen) và hiển thị ứng dụng chính
+                document.getElementById("splashScreen").style.display = "none";
+                document.querySelector(".container").style.display = "block";
+            });
+        }
+
+        /* =======================================
+           4. KÍCH HOẠT QUÉT MAIL MỚI
+           ======================================= */
+        function runProcess() {
+            if(isProcessing) return;
+
+            isProcessing = true;
+            const btn = document.getElementById("checkBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Đang kiểm tra email...';
+
+            callAPI("processTikTokGiftEmails").then(res => {
+                let text = "Không có email mới nào.";
+
+                if(res && res.totalLinks > 0) {
+                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
+                    
+                    // Cập nhật doanh thu ngay
+                    callAPI("updateIncome", {
+                        links: res.totalLinks,
+                        points: res.totalPoints
+                    });
+                }
+
+                btn.innerHTML = text;
+
+                if(res && res.items) {
+                    res.items.forEach(newItem => {
+                        let isDuplicate = pendingItems.some(i => i.link === newItem.link) || 
+                                          doneItems.some(i => i.link === newItem.link);
+                        
+                        if (!isDuplicate) pendingItems.push(newItem);
+                    });
+                    renderPending();
+                }
+
+                // Reset trạng thái nút sau 10 giây
+                setTimeout(() => {
+                    btn.innerHTML = "Kiểm Tra Email";
+                    btn.disabled = false;
+                    isProcessing = false;
+                }, 10000);
+            });
+        }
+
+        /* =======================================
+           5. HIỂN THỊ & XỬ LÝ DANH SÁCH (RENDER)
+           ======================================= */
+        
+        /* Render danh sách Chưa xử lý */
+        function renderPending() {
+            let html = "";
+            if (pendingItems.length === 0) {
+                html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
+            } else {
+                pendingItems.forEach((item, index) => {
+                    html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
+                        ${item.points}¥ (${item.expiry})
+                    </button>`;
+                });
+            }
+            document.getElementById("pendingSection").innerHTML = html;
+            updatePendingHeader();
+        }
+
+        function updatePendingHeader() {
+            let header = document.getElementById("pendingHeaderBtn");
+            if (pendingItems.length === 0) {
+                header.innerText = "Chưa Xử Lý";
+                return;
+            }
+            let totalPoints = pendingItems.reduce((sum, item) => sum + (parseInt(item.points) || 0), 0);
+            let totalLinks = pendingItems.length;
+            header.innerText = `Chưa Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
+        }
+
+        /* Render danh sách Đã xử lý */
+        function renderDone() {
+            let html = "";
+            if (doneItems.length === 0) {
+                html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
+            } else {
+                doneItems.forEach(item => {
+                    html += `<button class="done-item" onclick="window.open('${item.link}','_blank')">
+                        ${item.points}¥ - ${item.processTime}
+                    </button>`;
+                });
+            }
+            document.getElementById("doneSection").innerHTML = html;
+            updateDoneHeader();
+        }
+
+        function updateDoneHeader() {
+            let header = document.getElementById("doneHeaderBtn");
+            if (doneItems.length === 0) {
+                header.innerText = "Đã Xử Lý";
+                return;
+            }
+            let totalPoints = doneItems.reduce((sum, item) => sum + (parseInt(item.points) || 0), 0);
+            let totalLinks = doneItems.length;
+            header.innerText = `Đã Xử Lý (có ${totalLinks}link, tổng ${totalPoints}¥)`;
+        }
+
+        /* Xử lý khi bấm vào 1 link chưa xử lý */
+        function openAndMarkDone(index) {
+            let item = pendingItems[index];
+            window.open(item.link, "_blank");
+
+            let now = new Date();
+            let timeString = now.getHours().toString().padStart(2,'0') + ":" + 
+                             now.getMinutes().toString().padStart(2,'0') + " " + 
+                             now.getDate().toString().padStart(2,'0') + "/" + 
+                             (now.getMonth()+1).toString().padStart(2,'0');
+
+            // Gửi lệnh cập nhật trạng thái lên Server
+            callAPI("markAsDone", { id: item.id, processTime: timeString });
+
+            // Điều hướng sang mảng Đã xử lý tại giao diện Local
+            item.processTime = timeString;
+            doneItems.unshift(item);
+            pendingItems.splice(index, 1);
+            
+            renderPending();
+            renderDone();
+        }
+
+        /* =======================================
+           6. CÁC HÀM ĐIỀU KHIỂN GIAO DIỆN (UI CONTROLS)
+           ======================================= */
+        
+        /* Hiệu ứng Ẩn/Hiện thẻ (Accordion) */
+        function toggleSection(section) {
+            const pending = document.getElementById("pendingSection");
+            const done = document.getElementById("doneSection");
+            const isPendingOpen = !pending.classList.contains("hidden");
+            const isDoneOpen = !done.classList.contains("hidden");
+
+            if (section === "pending") {
+                if (isPendingOpen) {
+                    pending.classList.add("hidden");
+                    done.classList.add("hidden");
+                } else {
+                    pending.classList.remove("hidden");
+                    done.classList.add("hidden");
+                }
+            } else if (section === "done") {
+                if (isDoneOpen) {
+                    pending.classList.add("hidden");
+                    done.classList.add("hidden");
+                } else {
+                    done.classList.remove("hidden");
+                    pending.classList.add("hidden");
+                }
+            }
+        }
+
+        /* === Quản lý Modal Xóa Dữ Liệu === */
+        function openModal() {
+            document.getElementById("passwordModal").classList.add("active");
+            document.body.classList.add("modal-open");
+            document.getElementById("modalPassword").value = "";
+            document.getElementById("modalError").innerText = "";
+            document.getElementById("confirmBtn").disabled = true;
+        }
+
+        function closeModal() {
+            document.getElementById("passwordModal").classList.remove("active");
+            document.body.classList.remove("modal-open");
+        }
+
+        function outsideClick(event) { 
+            if (event.target.id === "passwordModal") closeModal(); 
+        }
+
+        function handleEnter(event) { 
+            if (event.key === "Enter" && !document.getElementById("confirmBtn").disabled) confirmDelete(); 
+        }
+
+        function togglePassword() {
+            const input = document.getElementById("modalPassword");
+            const eye = document.getElementById("eyeIcon");
+            if (input.type === "password") { 
+                input.type = "text"; 
+                eye.textContent = "👀"; 
+            } else { 
+                input.type = "password"; 
+                eye.textContent = "👁"; 
+            }
+        }
+
+        function checkInput() {
+            let val = document.getElementById("modalPassword").value.trim();
+            let btn = document.getElementById("confirmBtn");
+            btn.disabled = (val === "");
+            if (val !== "") btn.classList.add("enabled"); 
+            else btn.classList.remove("enabled");
+        }
+
+        function confirmDelete() {
+            let password = document.getElementById("modalPassword").value;
+            if (password === "8322") {
+                closeModal();
+                const deleteBtn = document.getElementById("deleteBtn");
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<span class="spinner"></span>Đang xóa dữ liệu...';
+
+                callAPI("clearDoneItems").then(res => {
+                    if(res && res.success) {
+                        deleteBtn.innerHTML = "✅ Đã xóa dữ liệu thành công";
+                        setTimeout(() => {
+                            deleteBtn.innerHTML = "Xóa Dữ Liệu";
+                            deleteBtn.disabled = false;
+                            refreshDataFromServer();
+                        }, 2000);
+                    } else {
+                        deleteBtn.innerHTML = "❌ Lỗi xóa dữ liệu";
+                        setTimeout(() => {
+                            deleteBtn.innerHTML = "Xóa Dữ Liệu";
+                            deleteBtn.disabled = false;
+                        }, 2000);
+                    }
+                });
+            } else {
+                document.getElementById("modalError").innerText = "Sai mật khẩu!";
+            }
+        }
+
+        function formatMoney(value){
+            if(value === null || value === undefined) return "0";
+            return Number(value).toLocaleString("en-US");
+        }
+
+        /* === Quản lý Modal & Trang Thu Nhập === */
+        function openIncomeModal() {
+            if(isLoadingIncome) return;
+            isLoadingIncome = true;
+
+            const btn = document.getElementById("incomeBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+
+            callAPI("getIncomeReport").then(res => {
+                let html = `
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">📅</span><span>Tháng</span></div>
+                        <div class="income-right">${res.month}</div>
+                    </div>
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">💰</span><span>Số Tiền</span></div>
+                        <div class="income-right income-total">${formatMoney(res.points)}¥</div>
+                    </div>
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">🔗</span><span>Link đã xử lý</span></div>
+                        <div class="income-right">${res.links}</div>
+                    </div>
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">📈</span><span>Thu nhập năm</span></div>
+                        <div class="income-right income-total">${formatMoney(res.yearPoints)}¥</div>
+                    </div>
+                `;
+                document.getElementById("incomeContent").innerHTML = html;
+                document.getElementById("incomeModal").classList.add("active");
+
+                btn.innerHTML = "Xem Thu Nhập";
+                btn.disabled = false;
+                isLoadingIncome = false;
+            });
+        }
+
+        function closeIncomeModal() {
+            document.getElementById("incomeModal").classList.remove("active");
+        }
+
+        function openIncomeDetails() {
+            const btn = event.target;
+            const okBtn = btn.previousElementSibling;
+
+            btn.disabled = true;
+            okBtn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Đang tải...';
+
+            callAPI("getIncomeDetails").then(res => {
+                let html = `
+                    <table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">
+                        <tr style="background:#f5f5f5; font-weight:bold;">
+                            <th style="padding:8px; border:1px solid #ddd;">Tháng</th>
+                            <th style="padding:8px; border:1px solid #ddd;">Số Link</th>
+                            <th style="padding:8px; border:1px solid #ddd;">Số Tiền</th>
+                        </tr>
+                `;
+                res.rows.forEach(r => {
+                    html += `
+                        <tr>
+                            <td style="padding:8px; border:1px solid #ddd;">${r.month}</td>
+                            <td style="padding:8px; border:1px solid #ddd;">${r.links}</td>
+                            <td style="padding:8px; border:1px solid #ddd;">${formatMoney(r.points)}¥</td>
+                        </tr>
+                    `;
+                });
+                html += "</table>";
+                document.getElementById("incomeTable").innerHTML = html;
+
+                closeIncomeModal();
+                
+                // Ẩn trang chính, chuyển view sang chi tiết
+                document.querySelector(".container").style.display = "none";
+                document.getElementById("incomePage").classList.remove("hidden");
+
+                btn.innerHTML = "Chi Tiết";
+                btn.disabled = false;
+                okBtn.disabled = false;
+            });
+        }
+
+        function closeIncomePage() {
+            document.getElementById("incomePage").classList.add("hidden");
+            document.querySelector(".container").style.display = "block";
+        }
+
+        /* =======================================
+           7. ĐĂNG KÝ SERVICE WORKER PWA
+           ======================================= */
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.log("SW Error:", err));
+        }
+
+        /* =======================================
+           8. CẢM ỨNG: KÉO ĐỂ LÀM MỚI TRANG (Pull to Refresh)
+           ======================================= */
+        let startY = 0;
+        let isPulling = false;
+        const threshold = 60; // Khoảng kéo tối thiểu
+
+        if ("ontouchstart" in window) {
+            document.addEventListener("touchstart", function(e) {
+                // Cho phép sai số nhỏ do hiệu ứng nảy trên mobile
+                if (window.scrollY <= 5) { 
+                    startY = e.touches[0].clientY;
+                    isPulling = true;
+                }
+            }, { passive: true });
+
+            document.addEventListener("touchend", function(e) {
+                if (!isPulling) return;
+                
+                let endY = e.changedTouches[0].clientY;
+                let distance = endY - startY;
+
+                // Kích hoạt nạp lại dữ liệu nếu khoảng vuốt đủ xa
+                if (distance > threshold) {
+                    refreshDataFromServer(); 
+                }
+
+                // Reset trạng thái
+                isPulling = false;
+                startY = 0;
             });
 
-        } else {
-
-            document.getElementById("modalError").innerText = "Sai mật khẩu!";
-
+            document.addEventListener("touchcancel", function() {
+                isPulling = false;
+                startY = 0;
+            });
         }
-    }
-
-    // Kiểm tra ô nhập liệu để kích hoạt nút bấm
-    function checkInput() {
-        let val = document.getElementById("modalPassword").value.trim();
-        let btn = document.getElementById("confirmBtn");
-        btn.disabled = (val === "");
-        if (val !== "") btn.classList.add("enabled"); 
-        else btn.classList.remove("enabled");
-    }
-
-    function openIncomeModal(){
-
-        if(isLoadingIncome) return;
-
-        isLoadingIncome = true;
-
-        const btn = document.getElementById("incomeBtn");
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
-
-        callAPI("getIncomeReport").then(res=>{
-
-            let html = `
-
-            <div class="income-row">
-            <div class="income-left">
-            <span class="income-icon">📅</span>
-            <span>Tháng</span>
-            </div>
-            <div class="income-right">${res.month}</div>
-            </div>
-
-            <div class="income-row">
-            <div class="income-left">
-            <span class="income-icon">💰</span>
-            <span>Số Tiền</span>
-            </div>
-            <div class="income-right income-total">${res.points}¥</div>
-            </div>
-
-            <div class="income-row">
-            <div class="income-left">
-            <span class="income-icon">🔗</span>
-            <span>Link đã xử lý</span>
-            </div>
-            <div class="income-right">${res.links}</div>
-            </div>
-
-            <div class="income-row">
-            <div class="income-left">
-            <span class="income-icon">📈</span>
-            <span>Thu nhập năm</span>
-            </div>
-            <div class="income-right income-total">${res.yearPoints}¥</div>
-            </div>
-            `;
-
-            document.getElementById("incomeContent").innerHTML = html;
-
-            document.getElementById("incomeModal").classList.add("active");
-
-            // trả nút về trạng thái ban đầu
-            btn.innerHTML = "Xem Thu Nhập";
-            btn.disabled = false;
-
-            isLoadingIncome = false;
-
-        });
-
-    }
-
-    function closeIncomeModal(){
-    document.getElementById("incomeModal").classList.remove("active");
-    }
-
-    function openIncomeDetails(){
-
-    const btn = event.target;
-    const okBtn = btn.previousElementSibling;
-
-    // khóa cả 2 nút
-    btn.disabled = true;
-    okBtn.disabled = true;
-
-    // hiệu ứng loading
-    btn.innerHTML = '<span class="spinner"></span>Đang tải...';
-
-    callAPI("getIncomeDetails").then(res=>{
-
-    let html = `
-    <table style="
-    width:100%;
-    border-collapse:collapse;
-    text-align:center;
-    margin-top:10px;
-    ">
-
-    <tr style="background:#f5f5f5;font-weight:bold">
-    <th style="padding:8px;border:1px solid #ddd">Tháng</th>
-    <th style="padding:8px;border:1px solid #ddd">Links</th>
-    <th style="padding:8px;border:1px solid #ddd">Số Tiền</th>
-    </tr>
-    `;
-
-    res.rows.forEach(r=>{
-    html += `
-    <tr>
-    <td style="padding:8px;border:1px solid #ddd">${r.month}</td>
-    <td style="padding:8px;border:1px solid #ddd">${r.links}</td>
-    <td style="padding:8px;border:1px solid #ddd">${r.points}¥</td>
-    </tr>
-    `;
-    });
-
-    html += "</table>";
-
-    document.getElementById("incomeTable").innerHTML = html;
-
-    // đóng modal
-    closeIncomeModal();
-
-    // ẩn trang chính
-    document.querySelector(".container").style.display = "none";
-
-    // hiện trang chi tiết
-    document.getElementById("incomePage").classList.remove("hidden");
-
-    // reset nút
-    btn.innerHTML = "Chi Tiết";
-    btn.disabled = false;
-    okBtn.disabled = false;
-
-    });
-
-    }
-
-    function closeIncomePage(){
-    document.getElementById("incomePage").classList.add("hidden");
-    document.querySelector(".container").style.display = "block";
-    }
-
-    /* ===== KIỂM TRA INTERNET ===== */
-    function checkInternet(){
-        if(!navigator.onLine){
-            // Hiện modal báo lỗi (đã hiển thị được nhờ z-index cao hơn)
-            document.getElementById("noInternetModal").classList.add("active");
-            return;
-        }
-
-        // NẾU CÓ INTERNET:
-        // 1. Đóng modal thông báo mất mạng (nếu đang mở)
-        document.getElementById("noInternetModal").classList.remove("active");
-
-        // 2. Hiện trạng thái "Đang kết nối..."
-        document.getElementById("splashText").classList.remove("hidden");
-
-        // 3. Tiến hành gọi server tải dữ liệu
-        refreshDataFromServer();
-    }
-
-</script>
-
-<script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-     .then(() => console.log("Service Worker Registered"))
-      .catch(err => console.log("SW Error:", err));
-}
-
-/* ===== Kéo xuống để cập nhật lại trang (Đã sửa lỗi) ===== */
-let startY = 0;
-let isPulling = false;
-const threshold = 60; // khoảng kéo tối thiểu
-
-if ("ontouchstart" in window) {
-    document.addEventListener("touchstart", function(e) {
-        // Cho phép sai số nhỏ (<= 5) thay vì === 0 do hiệu ứng nảy trên mobile
-        if (window.scrollY <= 5) { 
-            startY = e.touches[0].clientY;
-            isPulling = true;
-        }
-    }, { passive: true });
-
-    document.addEventListener("touchend", function(e) {
-        if (!isPulling) return;
-
-        let endY = e.changedTouches[0].clientY;
-        let distance = endY - startY;
-
-        // Nếu vuốt xuống vượt quá 60px thì kích hoạt load lại
-        if (distance > threshold) {
-            refreshDataFromServer(); 
-        }
-
-        // Reset trạng thái
-        isPulling = false;
-        startY = 0;
-    });
-
-    // Bổ sung: Xử lý trường hợp hệ điều hành ngắt thao tác cảm ứng
-    document.addEventListener("touchcancel", function() {
-        isPulling = false;
-        startY = 0;
-    });
-}
-    
-</script>
-
-<div id="incomeModal" class="modal">
-<div class="modal-box">
-
-<h3>Báo Cáo Thu Nhập</h3>
-
-<div id="incomeContent"></div>
-
-<div class="modal-actions">
-<button onclick="closeIncomeModal()">OK</button>
-<button onclick="openIncomeDetails()">Chi Tiết</button>
-</div>
-</div>
-</div>
-
-<!-- Trang Chi Tiết Thu Nhập -->
-<div id="incomePage" class="hidden">
-<div style="padding:12px">
-<h2 style="text-align:center;">Chi Tiết Thu Nhập</h2>
-<div id="incomeTable"></div>
-<button class="back-btn" onclick="closeIncomePage()">
-Quay Lại
-</button>
-</div>
-</div>
-
-<!-- Modal mất kết nối internet -->
-<div id="noInternetModal" class="modal">
-<div class="modal-box">
-
-<h3>⚠ Không có kết nối Internet</h3>
-
-<p style="color:#555;margin-top:10px;">
-Ứng dụng cần internet để hoạt động.<br>
-Vui lòng kiểm tra Wifi hoặc 4G.
-</p>
-
-<div class="modal-actions">
-<button onclick="checkInternet()">Kiểm Tra Lại</button>
-</div>
-
-</div>
-</div>
-
-<!-- Splash Screen -->
-<div id="splashScreen">
-
-<img src="Logo.png" class="splash-logo">
-
-<div id="splashText" class="splash-text hidden">
-<span class="spinner"></span>Đang kết nối máy chủ...
-</div>
-
-</div>
-
+    </script>
 </body>
 </html>
