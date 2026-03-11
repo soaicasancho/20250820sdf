@@ -330,6 +330,22 @@
             color:#555;
         }
 
+        /* ===== 2 nút cuối trang ===== */
+
+        .bottom-buttons{
+            display:flex;
+            width:95%;          /* giống width của button phía trên */
+            margin:8px auto;    /* căn giữa giống button */
+            gap:10px;
+        }
+
+        .bottom-buttons button{
+            flex:1;
+            width:auto;
+            margin:0;
+            white-space:nowrap; /* không cho chữ xuống dòng */
+        }
+
     </style>
 </head>
 <body>
@@ -349,13 +365,17 @@
     </button>
     <div id="doneSection" class="hidden"></div>
 
+    <div class="bottom-buttons">
+
     <button id="incomeBtn" class="income-btn" onclick="openIncomeModal()">
     📊 Báo Cáo Thu Nhập
     </button>
 
     <button id="deleteBtn" class="delete-done-btn" onclick="openModal()">
-        Xóa Dữ Liệu Đã Xử Lý
+    Xóa Dữ Liệu Đã Xử Lý
     </button>
+
+</div>
     </div>
 
 <div id="passwordModal" class="modal hidden" onclick="outsideClick(event)">
