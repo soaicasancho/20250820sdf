@@ -722,7 +722,7 @@
 
                     setTimeout(() => {
 
-                        deleteBtn.innerHTML = "Xóa Dữ Liệu Đã Xử Lý";
+                        deleteBtn.innerHTML = "Xóa Dữ Liệu";
                         deleteBtn.disabled = false;
 
                         refreshDataFromServer();
@@ -734,7 +734,7 @@
                     deleteBtn.innerHTML = "❌ Lỗi xóa dữ liệu";
 
                     setTimeout(() => {
-                        deleteBtn.innerHTML = "Xóa Dữ Liệu Đã Xử Lý";
+                        deleteBtn.innerHTML = "Xóa Dữ Liệu";
                         deleteBtn.disabled = false;
                     },2000);
 
@@ -811,7 +811,7 @@
             document.getElementById("incomeModal").classList.add("active");
 
             // trả nút về trạng thái ban đầu
-            btn.innerHTML = "📊 Báo Cáo Thu Nhập";
+            btn.innerHTML = "Xem Thu Nhập";
             btn.disabled = false;
 
             isLoadingIncome = false;
