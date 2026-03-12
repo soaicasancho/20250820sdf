@@ -406,6 +406,7 @@
         let doneItems = [];
         let isLoadingIncome = false;
         let isProcessing = false;
+        let isIncomePage = false;
 
         /* =======================================
            1. HÀM GỌI API DÙNG CHUNG
@@ -753,6 +754,7 @@
         }
 
         function openIncomeDetails() {
+
             const btn = event.target;
             const okBtn = btn.previousElementSibling;
 
@@ -761,41 +763,90 @@
             btn.innerHTML = '<span class="spinner"></span>Đang tải...';
 
             callAPI("getIncomeDetails").then(res => {
-                let html = `
-                    <table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">
-                        <tr style="background:#f5f5f5; font-weight:bold;">
-                            <th style="padding:8px; border:1px solid #ddd;">Tháng</th>
-                            <th style="padding:8px; border:1px solid #ddd;">Số Link</th>
-                            <th style="padding:8px; border:1px solid #ddd;">Số Tiền</th>
-                        </tr>
-                `;
-                res.rows.forEach(r => {
-                    html += `
-                        <tr>
-                            <td style="padding:8px; border:1px solid #ddd;">${r.month}</td>
-                            <td style="padding:8px; border:1px solid #ddd;">${r.links}</td>
-                            <td style="padding:8px; border:1px solid #ddd;">${formatMoney(r.points)}¥</td>
-                        </tr>
-                    `;
+
+                let rows = res.rows || [];
+
+                // ===== Gom dữ liệu theo năm =====
+                let yearMap = {};
+
+                rows.forEach(r => {
+
+                    let parts = r.month.split("/");
+                    let month = parts[0];
+                    let year = parts[1];
+
+                    if(!yearMap[year]){
+                        yearMap[year] = {
+                            months: [],
+                            total: 0
+                        };
+                    }
+
+                    yearMap[year].months.push(r);
+                    yearMap[year].total += Number(r.points || 0);
+
                 });
+
+                let html = `
+                <table style="width:100%; border-collapse:collapse; text-align:center; margin-top:10px;">
+                    <tr style="background:#f5f5f5; font-weight:bold;">
+                        <th style="padding:8px; border:1px solid #ddd;">Tháng</th>
+                        <th style="padding:8px; border:1px solid #ddd;">Số Link</th>
+                        <th style="padding:8px; border:1px solid #ddd;">Số Tiền</th>
+                    </tr>
+                `;
+
+                // ===== render từng năm =====
+                Object.keys(yearMap).sort().forEach(year => {
+
+                    yearMap[year].months.forEach(r => {
+
+                        html += `
+                        <tr>
+                            <td style="padding:8px;border:1px solid #ddd">${r.month}</td>
+                            <td style="padding:8px;border:1px solid #ddd">${r.links}</td>
+                            <td style="padding:8px;border:1px solid #ddd">${formatMoney(r.points)}¥</td>
+                        </tr>
+                        `;
+
+                    });
+
+                    // ===== dòng tổng năm =====
+                    html += `
+                    <tr style="background:#f5f5f5;font-weight:bold">
+                        <td colspan="2" style="padding:8px;border:1px solid #ddd;color:#d32f2f;text-align:center">
+                            Tổng thu nhập của năm ${year}
+                        </td>
+                        <td style="padding:8px;border:1px solid #ddd;color:#d32f2f">
+                            ${formatMoney(yearMap[year].total)}¥
+                        </td>
+                    </tr>
+                    `;
+
+                });
+
                 html += "</table>";
+
                 document.getElementById("incomeTable").innerHTML = html;
 
                 closeIncomeModal();
-                
-                // Ẩn trang chính, chuyển view sang chi tiết
+
                 document.querySelector(".container").style.display = "none";
                 document.getElementById("incomePage").classList.remove("hidden");
+                let isIncomePage = true;
 
                 btn.innerHTML = "Chi Tiết";
                 btn.disabled = false;
                 okBtn.disabled = false;
+
             });
+
         }
 
         function closeIncomePage() {
             document.getElementById("incomePage").classList.add("hidden");
             document.querySelector(".container").style.display = "block";
+            isIncomePage = false;
         }
 
         /* =======================================
@@ -830,7 +881,7 @@
                 let distance = endY - startY;
 
                 // Kích hoạt nạp lại dữ liệu nếu khoảng vuốt đủ xa
-                if (distance > threshold) {
+                if (distance > threshold && !isIncomePage) {
                     refreshDataFromServer(); 
                 }
 
