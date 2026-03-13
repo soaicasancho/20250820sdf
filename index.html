@@ -148,6 +148,18 @@
             text-align: center;
             position: relative;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: modalFade 0.25s ease;
+        }
+
+        @keyframes modalFade {
+            from {
+                transform: scale(0.92) translateY(10px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
         }
 
         .password-wrapper {
@@ -358,7 +370,7 @@
         </div>
     </div>
 
-    <div id="passwordModal" class="modal" onclick="outsideClick(event)">
+    <div id="passwordModal" class="modal">
         <div class="modal-box">
             <h3>Xác nhận xóa dữ liệu</h3>
             <div class="password-wrapper">
@@ -437,12 +449,12 @@
         /* Kiểm tra kết nối Internet */
         function checkInternet() {
             if (!navigator.onLine) {
-                document.getElementById("noInternetModal").classList.add("active");
+                openAnyModal("noInternetModal");
                 return;
             }
             
             // Nếu CÓ internet: Ẩn modal mất mạng, hiện text loading và gọi Server
-            document.getElementById("noInternetModal").classList.remove("active");
+            closeAnyModal("noInternetModal");
             document.getElementById("splashText").classList.remove("hidden");
             refreshDataFromServer();
         }
@@ -636,22 +648,47 @@
             }
         }
 
+        /* =======================================
+           7. CÁC HÀM QUẢN LÝ MODAL
+           ======================================= */
+
+        function openAnyModal(id){
+            document.getElementById(id).classList.add("active");
+            document.body.classList.add("modal-open");
+        }
+
+        function closeAnyModal(id){
+            document.getElementById(id).classList.remove("active");
+            document.body.classList.remove("modal-open");
+        }
+        
+        /*  CLICK NGOÀI MODAL ĐỂ ĐÓNG MODAL */
+        document.querySelectorAll(".modal").forEach(modal => {
+
+            modal.addEventListener("click", function(event){
+
+                // nếu click đúng nền modal (không phải modal-box)
+                if(event.target === modal){
+
+                    modal.classList.remove("active");
+                    document.body.classList.remove("modal-open");
+
+                }
+
+            });
+
+        });
+
         /* === Quản lý Modal Xóa Dữ Liệu === */
         function openModal() {
-            document.getElementById("passwordModal").classList.add("active");
-            document.body.classList.add("modal-open");
+            openAnyModal("passwordModal");
             document.getElementById("modalPassword").value = "";
             document.getElementById("modalError").innerText = "";
             document.getElementById("confirmBtn").disabled = true;
         }
 
         function closeModal() {
-            document.getElementById("passwordModal").classList.remove("active");
-            document.body.classList.remove("modal-open");
-        }
-
-        function outsideClick(event) { 
-            if (event.target.id === "passwordModal") closeModal(); 
+            closeAnyModal("passwordModal");
         }
 
         function handleEnter(event) { 
@@ -741,7 +778,7 @@
                     </div>
                 `;
                 document.getElementById("incomeContent").innerHTML = html;
-                document.getElementById("incomeModal").classList.add("active");
+                openAnyModal("incomeModal");
 
                 btn.innerHTML = "Xem Thu Nhập";
                 btn.disabled = false;
@@ -750,7 +787,7 @@
         }
 
         function closeIncomeModal() {
-            document.getElementById("incomeModal").classList.remove("active");
+            closeAnyModal("incomeModal");
         }
 
         function openIncomeDetails() {
@@ -850,7 +887,7 @@
         }
 
         /* =======================================
-           7. ĐĂNG KÝ SERVICE WORKER PWA
+           8. ĐĂNG KÝ SERVICE WORKER PWA
            ======================================= */
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js')
@@ -859,7 +896,7 @@
         }
 
         /* =======================================
-           8. CẢM ỨNG: KÉO ĐỂ LÀM MỚI TRANG (Pull to Refresh)
+           9. CẢM ỨNG: KÉO ĐỂ LÀM MỚI TRANG (Pull to Refresh)
            ======================================= */
         let startY = 0;
         let isPulling = false;
@@ -881,7 +918,7 @@
                 let distance = endY - startY;
 
                 // Kích hoạt nạp lại dữ liệu nếu khoảng vuốt đủ xa
-                if (distance > threshold && !isIncomePage) {
+                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open")) {
                     refreshDataFromServer(); 
                 }
 
