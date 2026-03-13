@@ -391,7 +391,7 @@
             <div id="incomeContent"></div>
             <div class="modal-actions">
                 <button onclick="closeIncomeModal()">OK</button>
-                <button onclick="openIncomeDetails()">Chi Tiết</button>
+                <button onclick="openIncomeDetails(event)">Chi Tiết</button>
             </div>
         </div>
     </div>
@@ -404,7 +404,22 @@
                 Vui lòng kiểm tra và thử lại.
             </p>
             <div class="modal-actions">
-                <button onclick="checkInternet()">Kiểm Tra Lại</button>
+                <button onclick="checkInternet()">Thử Lại</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="timeoutModal" class="modal">
+        <div class="modal-box">
+            <h3>⚠ Lỗi kết nối</h3>
+            <p style="color:#555;margin-top:10px">
+                Kết nối internet yếu hoặc máy chủ không phản hồi.<br>
+                Vui lòng kiểm tra và thử lại.
+            </p>
+
+            <div class="modal-actions">
+                <button onclick="retryLastAction()">Thử Lại</button>
+                <button class="cancel-btn" onclick="cancelLastAction()">Hủy</button>
             </div>
         </div>
     </div>
@@ -419,21 +434,40 @@
         let isLoadingIncome = false;
         let isProcessing = false;
         let isIncomePage = false;
+        let lastAction = null;
+        let lastTimeout = 50000;
+        let lastButton = null;
+        let lastButtonText = "";
 
         /* =======================================
            1. HÀM GỌI API DÙNG CHUNG
            ======================================= */
-        async function callAPI(action, data = {}) {
+        async function callAPI(action, data = {}, timeout = 50000) {
+
             data.action = action;
+
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+
             try {
+
                 let response = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
+
+                clearTimeout(id);
+
                 return await response.json();
+
             } catch (error) {
-                console.error("Lỗi API:", error);
+
+                console.log("Timeout or network error");
+
+                openAnyModal("timeoutModal");
+
                 return null;
             }
         }
@@ -472,9 +506,10 @@
            3. LẤY TOÀN BỘ DỮ LIỆU TỪ SERVER
            ======================================= */
         function refreshDataFromServer() {
+            lastAction = refreshDataFromServer; 
             document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
 
-            callAPI("loadAllItems").then(data => {
+            return callAPI("loadAllItems",{},50000).then(data => { // Thêm chữ return ở đây
                 if(data) {
                     pendingItems = data.pending || [];
                     doneItems = data.done || [];
@@ -486,7 +521,6 @@
                     document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
                 }
 
-                // Ẩn màn hình chờ (Splash Screen) và hiển thị ứng dụng chính
                 document.getElementById("splashScreen").style.display = "none";
                 document.querySelector(".container").style.display = "block";
             });
@@ -496,45 +530,73 @@
            4. KÍCH HOẠT QUÉT MAIL MỚI
            ======================================= */
         function runProcess() {
+
             if(isProcessing) return;
 
-            isProcessing = true;
             const btn = document.getElementById("checkBtn");
+
+            lastAction = runProcess;
+            lastButton = btn;
+            lastButtonText = btn.innerHTML;
+            lastTimeout = 95000;
+
+            isProcessing = true;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Đang kiểm tra email...';
 
-            callAPI("processTikTokGiftEmails").then(res => {
+            callAPI("processTikTokGiftEmails", {}, 95000).then(res => {
+
+                if(!res){
+                    isProcessing = false;
+                    btn.disabled = false;
+                    btn.innerHTML = "Kiểm Tra Email";
+                    return;
+                }
+
                 let text = "Không có email mới nào.";
 
-                if(res && res.totalLinks > 0) {
-                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
-                    
-                    // Cập nhật doanh thu ngay
-                    callAPI("updateIncome", {
-                        links: res.totalLinks,
-                        points: res.totalPoints
-                    });
+                if(res.totalLinks > 0){
+                    // Dùng formatMoney để đồng bộ định dạng tiền tệ
+                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${formatMoney(res.totalPoints)}¥)`;
+
+                    fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "updateIncome",
+                            links: res.totalLinks,
+                            points: res.totalPoints
+                        })
+                    }).catch(e => console.log("Lỗi cập nhật thu nhập ngầm", e));
                 }
 
                 btn.innerHTML = text;
 
-                if(res && res.items) {
+                if(res.items){
+
                     res.items.forEach(newItem => {
-                        let isDuplicate = pendingItems.some(i => i.link === newItem.link) || 
-                                          doneItems.some(i => i.link === newItem.link);
-                        
-                        if (!isDuplicate) pendingItems.push(newItem);
+
+                        let isDuplicate =
+                        pendingItems.some(i=>i.link===newItem.link) ||
+                        doneItems.some(i=>i.link===newItem.link);
+
+                        if(!isDuplicate){
+                            pendingItems.push(newItem);
+                        }
+
                     });
+
                     renderPending();
                 }
 
-                // Reset trạng thái nút sau 10 giây
-                setTimeout(() => {
-                    btn.innerHTML = "Kiểm Tra Email";
-                    btn.disabled = false;
-                    isProcessing = false;
-                }, 10000);
+                setTimeout(()=>{
+                    btn.innerHTML="Kiểm Tra Email";
+                    btn.disabled=false;
+                    isProcessing=false;
+                },10000);
+
             });
+
         }
 
         /* =======================================
@@ -547,8 +609,8 @@
             if (pendingItems.length === 0) {
                 html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
             } else {
-                pendingItems.forEach((item, index) => {
-                    html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
+                pendingItems.forEach((item) => {
+                    html += `<button class="pending-item" onclick="openAndMarkDone('${item.id}')">
                         ${item.points}¥ (${item.expiry})
                     </button>`;
                 });
@@ -596,7 +658,10 @@
         }
 
         /* Xử lý khi bấm vào 1 link chưa xử lý */
-        function openAndMarkDone(index) {
+        function openAndMarkDone(itemId) {
+            let index = pendingItems.findIndex(i => i.id === itemId);
+            if (index === -1) return;
+
             let item = pendingItems[index];
             window.open(item.link, "_blank");
 
@@ -662,10 +727,13 @@
             document.body.classList.remove("modal-open");
         }
         
-        /*  CLICK NGOÀI MODAL ĐỂ ĐÓNG MODAL */
+        /* CLICK NGOÀI MODAL ĐỂ ĐÓNG MODAL */
         document.querySelectorAll(".modal").forEach(modal => {
 
             modal.addEventListener("click", function(event){
+
+                // KHÔNG cho phép tự đóng với các modal cảnh báo hệ thống
+                if (modal.id === "noInternetModal" || modal.id === "timeoutModal") return;
 
                 // nếu click đúng nền modal (không phải modal-box)
                 if(event.target === modal){
@@ -678,6 +746,32 @@
             });
 
         });
+
+        /*  hàm Retry / Cancel khi kết nối kém */
+        function retryLastAction(){
+
+            closeAnyModal("timeoutModal");
+
+            if(lastAction){
+                lastAction();
+            }
+
+        }
+
+        function cancelLastAction(){
+            closeAnyModal("timeoutModal");
+
+            isProcessing = false;
+            isLoadingIncome = false;
+
+            if(lastButton){
+                lastButton.disabled = false;
+                // Trả lại text ban đầu cho nút thay vì để vòng xoay loading
+                if(lastButtonText) lastButton.innerHTML = lastButtonText; 
+            }
+
+            document.querySelectorAll('.modal-actions button').forEach(b => b.disabled = false);
+        }
 
         /* === Quản lý Modal Xóa Dữ Liệu === */
         function openModal() {
@@ -761,56 +855,91 @@
         }
 
         /* === Quản lý Modal & Trang Thu Nhập === */
-        function openIncomeModal() {
-            if(isLoadingIncome) return;
-            isLoadingIncome = true;
+        function openIncomeModal(){
 
-            const btn = document.getElementById("incomeBtn");
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+                if(isLoadingIncome) return;
 
-            callAPI("getIncomeReport").then(res => {
-                let html = `
-                    <div class="income-row">
-                        <div class="income-left"><span class="income-icon">📅</span><span>Tháng</span></div>
+                const btn = document.getElementById("incomeBtn");
+
+                lastAction = openIncomeModal;
+                lastButton = btn;
+                lastButtonText = btn.innerHTML;
+
+                isLoadingIncome = true;
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+
+                callAPI("getIncomeReport", {}, 50000).then(res=>{
+
+                        if(!res){
+                                isLoadingIncome=false;
+                                btn.disabled = false;
+                                btn.innerHTML = "Xem Thu Nhập";
+                                return;
+                        }
+
+                        let html = `
+                        <div class="income-row">
+                        <div class="income-left">📅 Tháng</div>
                         <div class="income-right">${res.month}</div>
-                    </div>
-                    <div class="income-row">
-                        <div class="income-left"><span class="income-icon">💰</span><span>Số Tiền</span></div>
-                        <div class="income-right income-total">${formatMoney(res.points)}¥</div>
-                    </div>
-                    <div class="income-row">
-                        <div class="income-left"><span class="income-icon">🔗</span><span>Link đã xử lý</span></div>
-                        <div class="income-right">${res.links}</div>
-                    </div>
-                    <div class="income-row">
-                        <div class="income-left"><span class="income-icon">📈</span><span>Thu nhập năm</span></div>
-                        <div class="income-right income-total">${formatMoney(res.yearPoints)}¥</div>
-                    </div>
-                `;
-                document.getElementById("incomeContent").innerHTML = html;
-                openAnyModal("incomeModal");
+                        </div>
 
-                btn.innerHTML = "Xem Thu Nhập";
-                btn.disabled = false;
-                isLoadingIncome = false;
-            });
+                        <div class="income-row">
+                        <div class="income-left">💰 Số Tiền</div>
+                        <div class="income-right income-total">${formatMoney(res.points)}¥</div>
+                        </div>
+
+                        <div class="income-row">
+                        <div class="income-left">🔗 Link đã xử lý</div>
+                        <div class="income-right">${res.links}</div>
+                        </div>
+
+                        <div class="income-row">
+                        <div class="income-left">📈 Thu nhập năm</div>
+                        <div class="income-right income-total">${formatMoney(res.yearPoints)}¥</div>
+                        </div>
+                        `;
+
+                        document.getElementById("incomeContent").innerHTML = html;
+
+                        openAnyModal("incomeModal");
+
+                        btn.innerHTML="Xem Thu Nhập";
+                        btn.disabled=false;
+
+                        isLoadingIncome=false;
+
+                });
+
         }
 
         function closeIncomeModal() {
             closeAnyModal("incomeModal");
         }
 
-        function openIncomeDetails() {
+        function openIncomeDetails(event) {
 
             const btn = event.target;
             const okBtn = btn.previousElementSibling;
+
+            lastAction = () => openIncomeDetails(event); 
+            lastButton = btn;
+            lastButtonText = btn.innerHTML;
 
             btn.disabled = true;
             okBtn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Đang tải...';
 
             callAPI("getIncomeDetails").then(res => {
+                
+                // Trả về nếu quá hạn 50s hoặc lỗi mạng
+                if (!res) {
+                    btn.innerHTML = "Chi Tiết";
+                    btn.disabled = false;
+                    okBtn.disabled = false;
+                    return; 
+                }
 
                 let rows = res.rows || [];
 
@@ -818,6 +947,8 @@
                 let yearMap = {};
 
                 rows.forEach(r => {
+                    // Bỏ qua nếu dữ liệu rỗng hoặc không có định dạng tháng để chống sập App
+                    if (!r || !r.month) return; 
 
                     let parts = r.month.split("/");
                     let month = parts[0];
@@ -911,12 +1042,13 @@
            ======================================= */
         let startY = 0;
         let isPulling = false;
+        let isRefreshing = false; // Thêm biến khóa để chống spam
         const threshold = 60; // Khoảng kéo tối thiểu
 
         if ("ontouchstart" in window) {
             document.addEventListener("touchstart", function(e) {
-                // Cho phép sai số nhỏ do hiệu ứng nảy trên mobile
-                if (window.scrollY <= 5) { 
+                // Chỉ cho phép kéo khi đang ở trên cùng và không trong quá trình refresh
+                if (window.scrollY <= 5 && !isRefreshing) { 
                     startY = e.touches[0].clientY;
                     isPulling = true;
                 }
@@ -928,12 +1060,13 @@
                 let endY = e.changedTouches[0].clientY;
                 let distance = endY - startY;
 
-                // Kích hoạt nạp lại dữ liệu nếu khoảng vuốt đủ xa
-                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open")) {
-                    refreshDataFromServer(); 
+                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open") && !isRefreshing) {
+                    isRefreshing = true; // Khóa lại
+                    refreshDataFromServer().finally(() => {
+                        isRefreshing = false; // Mở khóa khi hàm gốc chạy xong
+                    });
                 }
 
-                // Reset trạng thái
                 isPulling = false;
                 startY = 0;
             });
