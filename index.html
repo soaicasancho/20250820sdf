@@ -903,6 +903,14 @@
             btn.innerHTML = '<span class="spinner"></span>Đang tải...';
 
             callAPI("getIncomeDetails").then(res => {
+                
+                // Trả về nếu quá hạn 50s hoặc lỗi mạng
+                if (!res) {
+                    btn.innerHTML = "Chi Tiết";
+                    btn.disabled = false;
+                    okBtn.disabled = false;
+                    return; 
+                }
 
                 let rows = res.rows || [];
 
@@ -1003,12 +1011,13 @@
            ======================================= */
         let startY = 0;
         let isPulling = false;
+        let isRefreshing = false; // Thêm biến khóa để chống spam
         const threshold = 60; // Khoảng kéo tối thiểu
 
         if ("ontouchstart" in window) {
             document.addEventListener("touchstart", function(e) {
-                // Cho phép sai số nhỏ do hiệu ứng nảy trên mobile
-                if (window.scrollY <= 5) { 
+                // Chỉ cho phép kéo khi đang ở trên cùng và không trong quá trình refresh
+                if (window.scrollY <= 5 && !isRefreshing) { 
                     startY = e.touches[0].clientY;
                     isPulling = true;
                 }
@@ -1020,12 +1029,27 @@
                 let endY = e.changedTouches[0].clientY;
                 let distance = endY - startY;
 
-                // Kích hoạt nạp lại dữ liệu nếu khoảng vuốt đủ xa
-                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open")) {
-                    lastAction = refreshDataFromServer; refreshDataFromServer(); 
+                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open") && !isRefreshing) {
+                    isRefreshing = true; // Khóa lại
+                    lastAction = refreshDataFromServer;
+                    
+                    // Gọi lại hàm load dữ liệu
+                    document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+                    
+                    callAPI("loadAllItems",{},50000).then(data => {
+                        if(data) {
+                            pendingItems = data.pending || [];
+                            doneItems = data.done || [];
+                            renderPending();
+                            renderDone();
+                            updatePendingHeader();
+                        } else {
+                            document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
+                        }
+                        isRefreshing = false; // Mở khóa khi tải xong hoặc lỗi
+                    });
                 }
 
-                // Reset trạng thái
                 isPulling = false;
                 startY = 0;
             });
