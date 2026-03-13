@@ -507,9 +507,17 @@
            ======================================= */
         function refreshDataFromServer() {
             lastAction = refreshDataFromServer; 
-            document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+            lastButton = document.getElementById("pendingHeaderBtn");
+    
+            // Chỉ lưu text cũ nếu nút chưa có chữ "Đang tải" để tránh lưu đè nhầm trạng thái loading
+            if (!lastButton.innerHTML.includes("spinner")) {
+                lastButtonText = lastButton.innerHTML;
+            }
 
-            return callAPI("loadAllItems",{},50000).then(data => { // Thêm chữ return ở đây
+            lastButton.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+            isRefreshing = true; // Chủ động khóa Pull to Refresh tại đây
+
+            return callAPI("loadAllItems", {}, 50000).then(data => {
                 if(data) {
                     pendingItems = data.pending || [];
                     doneItems = data.done || [];
@@ -517,12 +525,20 @@
                     renderPending();
                     renderDone();
                     updatePendingHeader();
+            
+                    isRefreshing = false; // Tải thành công thì mở khóa ngay
                 } else {
-                    document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
+                    // Khi data = null (bị timeout 50s), callAPI đã tự hiện timeoutModal.
+                    // Ta KHÔNG mở khóa isRefreshing ở đây, cũng KHÔNG ghi đè thông báo lỗi lên list cũ.
+                    // Việc mở khóa (isRefreshing = false) sẽ do nút "Hủy" đảm nhiệm.
                 }
 
                 document.getElementById("splashScreen").style.display = "none";
                 document.querySelector(".container").style.display = "block";
+            }).catch(err => {
+                console.error("Lỗi Promise:", err);
+                isRefreshing = false; // Mở khóa phòng trường hợp lỗi code JS văng ra ngoài
+                if(lastButtonText) lastButton.innerHTML = lastButtonText;
             });
         }
 
@@ -763,10 +779,11 @@
 
             isProcessing = false;
             isLoadingIncome = false;
+            isRefreshing = false; // QUAN TRỌNG: Mở khóa để người dùng có thể kéo cập nhật lại
 
             if(lastButton){
                 lastButton.disabled = false;
-                // Trả lại text ban đầu cho nút thay vì để vòng xoay loading
+                // Trả lại text ban đầu (Ví dụ: "Chưa Xử Lý (có 5 link...)")
                 if(lastButtonText) lastButton.innerHTML = lastButtonText; 
             }
 
@@ -820,8 +837,10 @@
             confirmBtn.innerHTML = '<span class="spinner"></span> Đang xóa...';
             modalError.innerText = "";
 
-            // Lưu trạng thái để có thể Retry nếu lỗi mạng
+            // Cập nhật đầy đủ trạng thái để có thể Retry hoặc Cancel nếu lỗi mạng
             lastAction = confirmDelete;
+            lastButton = confirmBtn;
+            lastButtonText = "Xác nhận";
 
             callAPI("clearDoneItems", { password: password }).then(res => {
                 // Trả lại trạng thái nút xác nhận
@@ -1042,12 +1061,11 @@
            ======================================= */
         let startY = 0;
         let isPulling = false;
-        let isRefreshing = false; // Thêm biến khóa để chống spam
-        const threshold = 60; // Khoảng kéo tối thiểu
+        let isRefreshing = false; 
+        const threshold = 60; 
 
         if ("ontouchstart" in window) {
             document.addEventListener("touchstart", function(e) {
-                // Chỉ cho phép kéo khi đang ở trên cùng và không trong quá trình refresh
                 if (window.scrollY <= 5 && !isRefreshing) { 
                     startY = e.touches[0].clientY;
                     isPulling = true;
@@ -1056,15 +1074,13 @@
 
             document.addEventListener("touchend", function(e) {
                 if (!isPulling) return;
-                
+        
                 let endY = e.changedTouches[0].clientY;
                 let distance = endY - startY;
 
+                // Bỏ .finally() vì logic khóa/mở đã được tích hợp an toàn bên trong
                 if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open") && !isRefreshing) {
-                    isRefreshing = true; // Khóa lại
-                    refreshDataFromServer().finally(() => {
-                        isRefreshing = false; // Mở khóa khi hàm gốc chạy xong
-                    });
+                    refreshDataFromServer();
                 }
 
                 isPulling = false;
