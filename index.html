@@ -754,9 +754,14 @@
 
             closeAnyModal("timeoutModal");
 
+            isProcessing = false;
+            isLoadingIncome = false;
+
             if(lastButton){
                 lastButton.disabled = false;
             }
+
+            document.querySelectorAll('.modal-actions button').forEach(b => b.disabled = false);
 
         }
 
@@ -801,6 +806,10 @@
             if (password === "8322") {
                 closeModal();
                 const deleteBtn = document.getElementById("deleteBtn");
+                
+                lastAction = confirmDelete;
+                lastButton = deleteBtn;
+
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<span class="spinner"></span>Đang xóa dữ liệu...';
 
@@ -897,6 +906,9 @@
 
             const btn = event.target;
             const okBtn = btn.previousElementSibling;
+
+            lastAction = () => openIncomeDetails(event); 
+            lastButton = btn;
 
             btn.disabled = true;
             okBtn.disabled = true;
