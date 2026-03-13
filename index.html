@@ -391,7 +391,7 @@
             <div id="incomeContent"></div>
             <div class="modal-actions">
                 <button onclick="closeIncomeModal()">OK</button>
-                <button onclick="openIncomeDetails(event)">Chi Tiết</button>
+                <button onclick="openIncomeDetails()">Chi Tiết</button>
             </div>
         </div>
     </div>
@@ -404,29 +404,14 @@
                 Vui lòng kiểm tra và thử lại.
             </p>
             <div class="modal-actions">
-                <button onclick="checkInternet()">Thử Lại</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="timeoutModal" class="modal">
-        <div class="modal-box">
-            <h3>⚠ Lỗi kết nối</h3>
-            <p style="color:#555;margin-top:10px">
-                Kết nối internet yếu hoặc máy chủ không phản hồi.<br>
-                Vui lòng kiểm tra và thử lại.
-            </p>
-
-            <div class="modal-actions">
-                <button onclick="retryLastAction()">Thử Lại</button>
-                <button class="cancel-btn" onclick="cancelLastAction()">Hủy</button>
+                <button onclick="checkInternet()">Kiểm Tra Lại</button>
             </div>
         </div>
     </div>
 
     <script>
         /* 🔥 Cấu hình API Google Script */
-        const API_URL = "https://script.google.com/macros/s/AKfycbyw1LUl97ZEaAonpwjwzEk-UfaMiuF-OdVx7HSvmMNm4qe_8rn8knWf2E6b5wNXYHuG/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycby1XRR7dendfq5XQYcIb1tmRIjZAScqwhvAz6nyuNZlEVflfAdWtji4n-Bjic9bXYE3/exec";
 
         /* Biến lưu trữ trạng thái và dữ liệu tạm thời */
         let pendingItems = [];
@@ -434,40 +419,21 @@
         let isLoadingIncome = false;
         let isProcessing = false;
         let isIncomePage = false;
-        let lastAction = null;
-        let lastTimeout = 50000;
-        let lastButton = null;
-        let lastButtonText = "";
 
         /* =======================================
            1. HÀM GỌI API DÙNG CHUNG
            ======================================= */
-        async function callAPI(action, data = {}, timeout = 50000) {
-
+        async function callAPI(action, data = {}) {
             data.action = action;
-
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-
             try {
-
                 let response = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(data),
-                    signal: controller.signal
+                    body: JSON.stringify(data)
                 });
-
-                clearTimeout(id);
-
                 return await response.json();
-
             } catch (error) {
-
-                console.log("Timeout or network error");
-
-                openAnyModal("timeoutModal");
-
+                console.error("Lỗi API:", error);
                 return null;
             }
         }
@@ -506,10 +472,9 @@
            3. LẤY TOÀN BỘ DỮ LIỆU TỪ SERVER
            ======================================= */
         function refreshDataFromServer() {
-            lastAction = refreshDataFromServer; 
             document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
 
-            return callAPI("loadAllItems",{},50000).then(data => { // Thêm chữ return ở đây
+            callAPI("loadAllItems").then(data => {
                 if(data) {
                     pendingItems = data.pending || [];
                     doneItems = data.done || [];
@@ -521,6 +486,7 @@
                     document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
                 }
 
+                // Ẩn màn hình chờ (Splash Screen) và hiển thị ứng dụng chính
                 document.getElementById("splashScreen").style.display = "none";
                 document.querySelector(".container").style.display = "block";
             });
@@ -530,73 +496,45 @@
            4. KÍCH HOẠT QUÉT MAIL MỚI
            ======================================= */
         function runProcess() {
-
             if(isProcessing) return;
 
-            const btn = document.getElementById("checkBtn");
-
-            lastAction = runProcess;
-            lastButton = btn;
-            lastButtonText = btn.innerHTML;
-            lastTimeout = 95000;
-
             isProcessing = true;
+            const btn = document.getElementById("checkBtn");
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Đang kiểm tra email...';
 
-            callAPI("processTikTokGiftEmails", {}, 95000).then(res => {
-
-                if(!res){
-                    isProcessing = false;
-                    btn.disabled = false;
-                    btn.innerHTML = "Kiểm Tra Email";
-                    return;
-                }
-
+            callAPI("processTikTokGiftEmails").then(res => {
                 let text = "Không có email mới nào.";
 
-                if(res.totalLinks > 0){
-                    // Dùng formatMoney để đồng bộ định dạng tiền tệ
-                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${formatMoney(res.totalPoints)}¥)`;
-
-                    fetch(API_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "text/plain;charset=utf-8" },
-                        body: JSON.stringify({
-                            action: "updateIncome",
-                            links: res.totalLinks,
-                            points: res.totalPoints
-                        })
-                    }).catch(e => console.log("Lỗi cập nhật thu nhập ngầm", e));
+                if(res && res.totalLinks > 0) {
+                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
+                    
+                    // Cập nhật doanh thu ngay
+                    callAPI("updateIncome", {
+                        links: res.totalLinks,
+                        points: res.totalPoints
+                    });
                 }
 
                 btn.innerHTML = text;
 
-                if(res.items){
-
+                if(res && res.items) {
                     res.items.forEach(newItem => {
-
-                        let isDuplicate =
-                        pendingItems.some(i=>i.link===newItem.link) ||
-                        doneItems.some(i=>i.link===newItem.link);
-
-                        if(!isDuplicate){
-                            pendingItems.push(newItem);
-                        }
-
+                        let isDuplicate = pendingItems.some(i => i.link === newItem.link) || 
+                                          doneItems.some(i => i.link === newItem.link);
+                        
+                        if (!isDuplicate) pendingItems.push(newItem);
                     });
-
                     renderPending();
                 }
 
-                setTimeout(()=>{
-                    btn.innerHTML="Kiểm Tra Email";
-                    btn.disabled=false;
-                    isProcessing=false;
-                },10000);
-
+                // Reset trạng thái nút sau 10 giây
+                setTimeout(() => {
+                    btn.innerHTML = "Kiểm Tra Email";
+                    btn.disabled = false;
+                    isProcessing = false;
+                }, 10000);
             });
-
         }
 
         /* =======================================
@@ -609,8 +547,8 @@
             if (pendingItems.length === 0) {
                 html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
             } else {
-                pendingItems.forEach((item) => {
-                    html += `<button class="pending-item" onclick="openAndMarkDone('${item.id}')">
+                pendingItems.forEach((item, index) => {
+                    html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
                         ${item.points}¥ (${item.expiry})
                     </button>`;
                 });
@@ -658,10 +596,7 @@
         }
 
         /* Xử lý khi bấm vào 1 link chưa xử lý */
-        function openAndMarkDone(itemId) {
-            let index = pendingItems.findIndex(i => i.id === itemId);
-            if (index === -1) return;
-
+        function openAndMarkDone(index) {
             let item = pendingItems[index];
             window.open(item.link, "_blank");
 
@@ -727,13 +662,10 @@
             document.body.classList.remove("modal-open");
         }
         
-        /* CLICK NGOÀI MODAL ĐỂ ĐÓNG MODAL */
+        /*  CLICK NGOÀI MODAL ĐỂ ĐÓNG MODAL */
         document.querySelectorAll(".modal").forEach(modal => {
 
             modal.addEventListener("click", function(event){
-
-                // KHÔNG cho phép tự đóng với các modal cảnh báo hệ thống
-                if (modal.id === "noInternetModal" || modal.id === "timeoutModal") return;
 
                 // nếu click đúng nền modal (không phải modal-box)
                 if(event.target === modal){
@@ -746,32 +678,6 @@
             });
 
         });
-
-        /*  hàm Retry / Cancel khi kết nối kém */
-        function retryLastAction(){
-
-            closeAnyModal("timeoutModal");
-
-            if(lastAction){
-                lastAction();
-            }
-
-        }
-
-        function cancelLastAction(){
-            closeAnyModal("timeoutModal");
-
-            isProcessing = false;
-            isLoadingIncome = false;
-
-            if(lastButton){
-                lastButton.disabled = false;
-                // Trả lại text ban đầu cho nút thay vì để vòng xoay loading
-                if(lastButtonText) lastButton.innerHTML = lastButtonText; 
-            }
-
-            document.querySelectorAll('.modal-actions button').forEach(b => b.disabled = false);
-        }
 
         /* === Quản lý Modal Xóa Dữ Liệu === */
         function openModal() {
@@ -811,36 +717,42 @@
 
         function confirmDelete() {
             let password = document.getElementById("modalPassword").value;
-            if (password === "8322") {
-                closeModal();
-                const deleteBtn = document.getElementById("deleteBtn");
-                
-                lastAction = confirmDelete;
-                lastButton = deleteBtn;
-                lastButtonText = "Xóa Dữ Liệu";
+            const modalError = document.getElementById("modalError");
+            const confirmBtn = document.getElementById("confirmBtn");
+            const deleteBtn = document.getElementById("deleteBtn");
 
-                deleteBtn.disabled = true;
-                deleteBtn.innerHTML = '<span class="spinner"></span>Đang xóa dữ liệu...';
+            // Hiệu ứng chờ trên modal
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner"></span> Đang xóa...';
+            modalError.innerText = "";
 
-                callAPI("clearDoneItems").then(res => {
-                    if(res && res.success) {
-                        deleteBtn.innerHTML = "✅ Đã xóa dữ liệu thành công";
-                        setTimeout(() => {
-                            deleteBtn.innerHTML = "Xóa Dữ Liệu";
-                            deleteBtn.disabled = false;
-                            refreshDataFromServer();
-                        }, 2000);
-                    } else {
-                        deleteBtn.innerHTML = "❌ Lỗi xóa dữ liệu";
-                        setTimeout(() => {
-                            deleteBtn.innerHTML = "Xóa Dữ Liệu";
-                            deleteBtn.disabled = false;
-                        }, 2000);
-                    }
-                });
-            } else {
-                document.getElementById("modalError").innerText = "Sai mật khẩu!";
-            }
+            // Lưu trạng thái để có thể Retry nếu lỗi mạng
+            lastAction = confirmDelete;
+
+            callAPI("clearDoneItems", { password: password }).then(res => {
+                // Trả lại trạng thái nút xác nhận
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = "Xác nhận";
+
+                if (!res) return; // callAPI đã tự hiện modal lỗi kết nối nếu res null
+
+                if (res.success) {
+                    // Nếu đúng mật khẩu và xóa thành công
+                    closeModal();
+                    
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = "✅ Đã xóa dữ liệu thành công";
+
+                    setTimeout(() => {
+                        deleteBtn.innerHTML = "Xóa Dữ Liệu";
+                        deleteBtn.disabled = false;
+                        refreshDataFromServer();
+                    }, 2000);
+                } else {
+                    // Nếu sai mật khẩu (trả về từ server)
+                    modalError.innerText = res.error || "Mật khẩu không đúng!";
+                }
+            });
         }
 
         function formatMoney(value){
@@ -849,91 +761,56 @@
         }
 
         /* === Quản lý Modal & Trang Thu Nhập === */
-        function openIncomeModal(){
+        function openIncomeModal() {
+            if(isLoadingIncome) return;
+            isLoadingIncome = true;
 
-                if(isLoadingIncome) return;
+            const btn = document.getElementById("incomeBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
 
-                const btn = document.getElementById("incomeBtn");
-
-                lastAction = openIncomeModal;
-                lastButton = btn;
-                lastButtonText = btn.innerHTML;
-
-                isLoadingIncome = true;
-
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
-
-                callAPI("getIncomeReport", {}, 50000).then(res=>{
-
-                        if(!res){
-                                isLoadingIncome=false;
-                                btn.disabled = false;
-                                btn.innerHTML = "Xem Thu Nhập";
-                                return;
-                        }
-
-                        let html = `
-                        <div class="income-row">
-                        <div class="income-left">📅 Tháng</div>
+            callAPI("getIncomeReport").then(res => {
+                let html = `
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">📅</span><span>Tháng</span></div>
                         <div class="income-right">${res.month}</div>
-                        </div>
-
-                        <div class="income-row">
-                        <div class="income-left">💰 Số Tiền</div>
+                    </div>
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">💰</span><span>Số Tiền</span></div>
                         <div class="income-right income-total">${formatMoney(res.points)}¥</div>
-                        </div>
-
-                        <div class="income-row">
-                        <div class="income-left">🔗 Link đã xử lý</div>
+                    </div>
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">🔗</span><span>Link đã xử lý</span></div>
                         <div class="income-right">${res.links}</div>
-                        </div>
-
-                        <div class="income-row">
-                        <div class="income-left">📈 Thu nhập năm</div>
+                    </div>
+                    <div class="income-row">
+                        <div class="income-left"><span class="income-icon">📈</span><span>Thu nhập năm</span></div>
                         <div class="income-right income-total">${formatMoney(res.yearPoints)}¥</div>
-                        </div>
-                        `;
+                    </div>
+                `;
+                document.getElementById("incomeContent").innerHTML = html;
+                openAnyModal("incomeModal");
 
-                        document.getElementById("incomeContent").innerHTML = html;
-
-                        openAnyModal("incomeModal");
-
-                        btn.innerHTML="Xem Thu Nhập";
-                        btn.disabled=false;
-
-                        isLoadingIncome=false;
-
-                });
-
+                btn.innerHTML = "Xem Thu Nhập";
+                btn.disabled = false;
+                isLoadingIncome = false;
+            });
         }
 
         function closeIncomeModal() {
             closeAnyModal("incomeModal");
         }
 
-        function openIncomeDetails(event) {
+        function openIncomeDetails() {
 
             const btn = event.target;
             const okBtn = btn.previousElementSibling;
-
-            lastAction = () => openIncomeDetails(event); 
-            lastButton = btn;
-            lastButtonText = btn.innerHTML;
 
             btn.disabled = true;
             okBtn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Đang tải...';
 
             callAPI("getIncomeDetails").then(res => {
-                
-                // Trả về nếu quá hạn 50s hoặc lỗi mạng
-                if (!res) {
-                    btn.innerHTML = "Chi Tiết";
-                    btn.disabled = false;
-                    okBtn.disabled = false;
-                    return; 
-                }
 
                 let rows = res.rows || [];
 
@@ -941,8 +818,6 @@
                 let yearMap = {};
 
                 rows.forEach(r => {
-                    // Bỏ qua nếu dữ liệu rỗng hoặc không có định dạng tháng để chống sập App
-                    if (!r || !r.month) return; 
 
                     let parts = r.month.split("/");
                     let month = parts[0];
@@ -1036,13 +911,12 @@
            ======================================= */
         let startY = 0;
         let isPulling = false;
-        let isRefreshing = false; // Thêm biến khóa để chống spam
         const threshold = 60; // Khoảng kéo tối thiểu
 
         if ("ontouchstart" in window) {
             document.addEventListener("touchstart", function(e) {
-                // Chỉ cho phép kéo khi đang ở trên cùng và không trong quá trình refresh
-                if (window.scrollY <= 5 && !isRefreshing) { 
+                // Cho phép sai số nhỏ do hiệu ứng nảy trên mobile
+                if (window.scrollY <= 5) { 
                     startY = e.touches[0].clientY;
                     isPulling = true;
                 }
@@ -1054,13 +928,12 @@
                 let endY = e.changedTouches[0].clientY;
                 let distance = endY - startY;
 
-                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open") && !isRefreshing) {
-                    isRefreshing = true; // Khóa lại
-                    refreshDataFromServer().finally(() => {
-                        isRefreshing = false; // Mở khóa khi hàm gốc chạy xong
-                    });
+                // Kích hoạt nạp lại dữ liệu nếu khoảng vuốt đủ xa
+                if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open")) {
+                    refreshDataFromServer(); 
                 }
 
+                // Reset trạng thái
                 isPulling = false;
                 startY = 0;
             });
