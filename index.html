@@ -437,6 +437,7 @@
         let lastAction = null;
         let lastTimeout = 50000;
         let lastButton = null;
+        let lastButtonText = "";
 
         /* =======================================
            1. HÀM GỌI API DÙNG CHUNG
@@ -505,10 +506,10 @@
            3. LẤY TOÀN BỘ DỮ LIỆU TỪ SERVER
            ======================================= */
         function refreshDataFromServer() {
-            lastAction = refreshDataFromServer; // Lưu vết để Modal lỗi có thể gọi lại
+            lastAction = refreshDataFromServer; 
             document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
 
-            callAPI("loadAllItems",{},50000).then(data => {
+            return callAPI("loadAllItems",{},50000).then(data => { // Thêm chữ return ở đây
                 if(data) {
                     pendingItems = data.pending || [];
                     doneItems = data.done || [];
@@ -520,7 +521,6 @@
                     document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
                 }
 
-                // Ẩn màn hình chờ (Splash Screen) và hiển thị ứng dụng chính
                 document.getElementById("splashScreen").style.display = "none";
                 document.querySelector(".container").style.display = "block";
             });
@@ -537,6 +537,7 @@
 
             lastAction = runProcess;
             lastButton = btn;
+            lastButtonText = btn.innerHTML;
             lastTimeout = 95000;
 
             isProcessing = true;
@@ -555,14 +556,18 @@
                 let text = "Không có email mới nào.";
 
                 if(res.totalLinks > 0){
+                    // Dùng formatMoney để đồng bộ định dạng tiền tệ
+                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${formatMoney(res.totalPoints)}¥)`;
 
-                    text = `Quét xong: có ${res.totalLinks} link mới (tổng ${res.totalPoints}¥)`;
-
-                    callAPI("updateIncome", {
-                        links: res.totalLinks,
-                        points: res.totalPoints
-                    });
-
+                    fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            action: "updateIncome",
+                            links: res.totalLinks,
+                            points: res.totalPoints
+                        })
+                    }).catch(e => console.log("Lỗi cập nhật thu nhập ngầm", e));
                 }
 
                 btn.innerHTML = text;
@@ -604,8 +609,8 @@
             if (pendingItems.length === 0) {
                 html = "<p style='text-align:center; color:#888;'>Không có dữ liệu</p>";
             } else {
-                pendingItems.forEach((item, index) => {
-                    html += `<button class="pending-item" onclick="openAndMarkDone(${index})">
+                pendingItems.forEach((item) => {
+                    html += `<button class="pending-item" onclick="openAndMarkDone('${item.id}')">
                         ${item.points}¥ (${item.expiry})
                     </button>`;
                 });
@@ -653,7 +658,10 @@
         }
 
         /* Xử lý khi bấm vào 1 link chưa xử lý */
-        function openAndMarkDone(index) {
+        function openAndMarkDone(itemId) {
+            let index = pendingItems.findIndex(i => i.id === itemId);
+            if (index === -1) return;
+
             let item = pendingItems[index];
             window.open(item.link, "_blank");
 
@@ -751,7 +759,6 @@
         }
 
         function cancelLastAction(){
-
             closeAnyModal("timeoutModal");
 
             isProcessing = false;
@@ -759,10 +766,11 @@
 
             if(lastButton){
                 lastButton.disabled = false;
+                // Trả lại text ban đầu cho nút thay vì để vòng xoay loading
+                if(lastButtonText) lastButton.innerHTML = lastButtonText; 
             }
 
             document.querySelectorAll('.modal-actions button').forEach(b => b.disabled = false);
-
         }
 
         /* === Quản lý Modal Xóa Dữ Liệu === */
@@ -809,6 +817,7 @@
                 
                 lastAction = confirmDelete;
                 lastButton = deleteBtn;
+                lastButtonText = "Xóa Dữ Liệu";
 
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<span class="spinner"></span>Đang xóa dữ liệu...';
@@ -848,6 +857,7 @@
 
                 lastAction = openIncomeModal;
                 lastButton = btn;
+                lastButtonText = btn.innerHTML;
 
                 isLoadingIncome = true;
 
@@ -909,6 +919,7 @@
 
             lastAction = () => openIncomeDetails(event); 
             lastButton = btn;
+            lastButtonText = btn.innerHTML;
 
             btn.disabled = true;
             okBtn.disabled = true;
@@ -930,6 +941,8 @@
                 let yearMap = {};
 
                 rows.forEach(r => {
+                    // Bỏ qua nếu dữ liệu rỗng hoặc không có định dạng tháng để chống sập App
+                    if (!r || !r.month) return; 
 
                     let parts = r.month.split("/");
                     let month = parts[0];
@@ -1043,22 +1056,8 @@
 
                 if (distance > threshold && !isIncomePage && !document.body.classList.contains("modal-open") && !isRefreshing) {
                     isRefreshing = true; // Khóa lại
-                    lastAction = refreshDataFromServer;
-                    
-                    // Gọi lại hàm load dữ liệu
-                    document.getElementById("pendingHeaderBtn").innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
-                    
-                    callAPI("loadAllItems",{},50000).then(data => {
-                        if(data) {
-                            pendingItems = data.pending || [];
-                            doneItems = data.done || [];
-                            renderPending();
-                            renderDone();
-                            updatePendingHeader();
-                        } else {
-                            document.getElementById("pendingSection").innerHTML = "<p style='text-align:center; color:#888;'>Lỗi kết nối máy chủ!</p>";
-                        }
-                        isRefreshing = false; // Mở khóa khi tải xong hoặc lỗi
+                    refreshDataFromServer().finally(() => {
+                        isRefreshing = false; // Mở khóa khi hàm gốc chạy xong
                     });
                 }
 
