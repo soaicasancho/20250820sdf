@@ -515,7 +515,7 @@
                 lastButtonText = lastButton.innerHTML;
             }
 
-            lastButton.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+            lastButton.innerHTML = '<span class="spinner"></span>Đang tải...';
             isRefreshing = true; // Chủ động khóa Pull to Refresh tại đây
 
             return callAPI("loadAllItems", {}, 50000).then(data => {
@@ -888,7 +888,7 @@
                 isLoadingIncome = true;
 
                 btn.disabled = true;
-                btn.innerHTML = '<span class="spinner"></span>Đang tải dữ liệu...';
+                btn.innerHTML = '<span class="spinner"></span>Đang tải...';
 
                 callAPI("getIncomeReport", {}, 50000).then(res=>{
 
