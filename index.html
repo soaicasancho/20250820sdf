@@ -878,25 +878,25 @@
                 }
 
                 // 2. Xóa dữ liệu Google Sheet
-                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing sys...';
+                confirmBtn.innerHTML = '<span class="spinner"></span> Cleaning system...';
                 let resSheet = await callAPI("clearSheetData");
                 if (!resSheet) return; 
                 if (!resSheet.success) throw new Error(resSheet.error);
 
                 // 3. Xóa Email đã xử lý
-                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing email...';
+                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing remail...';
                 let resReadEmails = await callAPI("clearReadEmails");
                 if (!resReadEmails) return;
                 if (!resReadEmails.success) throw new Error(resReadEmails.error);
 
                 // 4. Xóa Thư đã gửi
-                confirmBtn.innerHTML = '<span class="spinner"></span> Cleaning sent...';
+                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing semail...';
                 let resSentEmails = await callAPI("clearSentEmails");
                 if (!resSentEmails) return;
                 if (!resSentEmails.success) throw new Error(resSentEmails.error);
 
                 // 5. Xóa Label
-                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing label...';
+                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing lmail...';
                 let resLabels = await callAPI("clearLabels");
                 if (!resLabels) return;
                 if (!resLabels.success) throw new Error(resLabels.error);
