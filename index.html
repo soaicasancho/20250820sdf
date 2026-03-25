@@ -427,7 +427,7 @@
 
     <script>
         /* 🔥 Cấu hình API Google Script */
-        const API_URL = "https://script.google.com/macros/s/AKfycbwls8SQf-osNRFBj53l5a1tNBWPfaWmChtnhBBczCcz7tafSDUAZfy_LrsAKx5JoGXz/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbzRN0yv2vi2E6ZwbZ9ZPJHx0hk-qKxlec_-p5-5UdySOoNRzaB0dVDkmDQ51eIFEiU/exec";
 
         /* Biến lưu trữ trạng thái và dữ liệu tạm thời */
         let pendingItems = [];
@@ -835,7 +835,7 @@
 
             // Hiệu ứng chờ trên modal
             confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="spinner"></span> Đang xóa...';
+            confirmBtn.innerHTML = '<span class="spinner"></span> Đang xác thực...';
             modalError.innerText = "";
 
             // Cập nhật đầy đủ trạng thái để có thể Retry hoặc Cancel nếu lỗi mạng
@@ -843,7 +843,8 @@
             lastButton = confirmBtn;
             lastButtonText = "Xác nhận";
 
-            callAPI("clearDoneItems", { password: password }).then(res => {
+            // Tăng thời gian chờ lên 90 giây (90000ms) để App Script có đủ thời gian dọn dẹp Gmail
+            callAPI("clearDoneItems", { password: password }, 90000).then(res => {
                 // Trả lại trạng thái nút xác nhận
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = "Xác nhận";
