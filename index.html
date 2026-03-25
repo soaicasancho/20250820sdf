@@ -380,7 +380,7 @@
             </div>
             <div id="modalError" class="error-text"></div>
             <div class="modal-actions">
-                <button id="confirmBtn" class="confirm-btn" onclick="confirmDelete()" disabled>Xác nhận</button>
+                <button id="confirmBtn" class="confirm-btn" onclick="confirmDelete()" disabled>OK</button>
                 <button class="cancel-btn" onclick="closeModal()">Hủy</button>
             </div>
         </div>
@@ -427,7 +427,7 @@
 
     <script>
         /* 🔥 Cấu hình API Google Script */
-        const API_URL = "https://script.google.com/macros/s/AKfycbzRN0yv2vi2E6ZwbZ9ZPJHx0hk-qKxlec_-p5-5UdySOoNRzaB0dVDkmDQ51eIFEiU/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbza1_9iRvy8vWfQXU8n5cfMqByqkiZphXRk2VUaL3VYBifpHK_hmCqNuqPWM9hZ9Ns-/exec";
 
         /* Biến lưu trữ trạng thái và dữ liệu tạm thời */
         let pendingItems = [];
@@ -827,47 +827,102 @@
             else btn.classList.remove("enabled");
         }
 
-        function confirmDelete() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        async function confirmDelete() {
             let password = document.getElementById("modalPassword").value;
             const modalError = document.getElementById("modalError");
             const confirmBtn = document.getElementById("confirmBtn");
             const deleteBtn = document.getElementById("deleteBtn");
 
-            // Hiệu ứng chờ trên modal
+            // Khởi tạo trạng thái ban đầu
             confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="spinner"></span> Đang xác thực...';
             modalError.innerText = "";
-
-            // Cập nhật đầy đủ trạng thái để có thể Retry hoặc Cancel nếu lỗi mạng
             lastAction = confirmDelete;
             lastButton = confirmBtn;
-            lastButtonText = "Xác nhận";
+            lastButtonText = "OK";
 
-            // Tăng thời gian chờ lên 90 giây (90000ms) để App Script có đủ thời gian dọn dẹp Gmail
-            callAPI("clearDoneItems", { password: password }, 90000).then(res => {
-                // Trả lại trạng thái nút xác nhận
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = "Xác nhận";
-
-                if (!res) return; // callAPI đã tự hiện modal lỗi kết nối nếu res null
-
-                if (res.success) {
-                    // Nếu đúng mật khẩu và xóa thành công
-                    closeModal();
-                    
-                    deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = "Đã xoá...";
-
-                    setTimeout(() => {
-                        deleteBtn.innerHTML = "Xóa Dữ Liệu";
-                        deleteBtn.disabled = false;
-                        refreshDataFromServer();
-                    }, 2000);
-                } else {
-                    // Nếu sai mật khẩu (trả về từ server)
-                    modalError.innerText = res.error || "Mật khẩu không đúng!";
+            try {
+                // 1. Xác thực mật khẩu
+                confirmBtn.innerHTML = '<span class="spinner"></span> Đang xác thực...';
+                let resAuth = await callAPI("verifyPassword", { password: password });
+                if (!resAuth) return; // Nếu null (mất mạng/timeout), callAPI đã tự hiện modal lỗi
+                
+                if (!resAuth.success) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = "OK";
+                    modalError.innerText = resAuth.error || "Mật khẩu không chính xác!";
+                    return; // Sai pass thì dừng luôn
                 }
-            });
+
+                // 2. Xóa dữ liệu Google Sheet
+                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing sys...';
+                let resSheet = await callAPI("clearSheetData");
+                if (!resSheet) return; 
+                if (!resSheet.success) throw new Error(resSheet.error);
+
+                // 3. Xóa Email đã xử lý
+                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing email...';
+                let resReadEmails = await callAPI("clearReadEmails");
+                if (!resReadEmails) return;
+                if (!resReadEmails.success) throw new Error(resReadEmails.error);
+
+                // 4. Xóa Thư đã gửi
+                confirmBtn.innerHTML = '<span class="spinner"></span> Cleaning sent...';
+                let resSentEmails = await callAPI("clearSentEmails");
+                if (!resSentEmails) return;
+                if (!resSentEmails.success) throw new Error(resSentEmails.error);
+
+                // 5. Xóa Label
+                confirmBtn.innerHTML = '<span class="spinner"></span> Clearing label...';
+                let resLabels = await callAPI("clearLabels");
+                if (!resLabels) return;
+                if (!resLabels.success) throw new Error(resLabels.error);
+
+                // HOÀN THÀNH TẤT CẢ
+                closeModal();
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = "OK"; // Trả lại text chuẩn cho modal
+
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = "Đã xoá...";
+
+                // Sau 2 giây, trả lại giao diện chính và tải lại dữ liệu mới
+                setTimeout(() => {
+                    deleteBtn.innerHTML = "Xóa Dữ Liệu";
+                    deleteBtn.disabled = false;
+                    refreshDataFromServer();
+                }, 2000);
+
+            } catch (error) {
+                // Xử lý nếu có 1 bước trả về lỗi từ Server (ví dụ catch(e) ở Google Script)
+                console.error(error);
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = "OK";
+                modalError.innerText = "Có lỗi xảy ra: " + error.message;
+            }
         }
 
         function formatMoney(value){
